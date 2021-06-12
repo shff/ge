@@ -84,6 +84,8 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) voice *voices;
 @end
 
+short s[] = { 8000, 16000, 30000, 16000, 8000 };
+
 @implementation App
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
@@ -92,6 +94,11 @@ static OSStatus audioCallback(void *inRefCon,
   {
     _voices = malloc(sizeof(voice) * 32);
     memset(_voices, 0, sizeof(voice) * 32);
+
+    _voices[0].data = s;
+    _voices[0].length = 5;
+    _voices[0].position = 0;
+    _voices[0].state = 1;
 
     // Initialize Audio
     AudioUnit audioUnit;
@@ -162,7 +169,7 @@ static OSStatus audioCallback(void *inRefCon,
     _lag = 0.0;
 
     // Reset Deltas
-    _mouseMode = 2;
+    _mouseMode = 0;
     _clickX = 0.0f;
     _clickY = 0.0f;
     _deltaX = 0.0f;
@@ -301,6 +308,8 @@ static OSStatus audioCallback(void *inRefCon,
   {
     _clickX = [event locationInWindow].x;
     _clickY = [event locationInWindow].y;
+    _voices[0].position = 0;
+    _voices[0].state = 1;
   }
 }
 
