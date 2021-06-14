@@ -163,6 +163,7 @@ static OSStatus audioCallback(void *inRefCon,
 
     // Reset Deltas
     _mouseMode = 2;
+    _cursorVisible = 1;
     _clickX = 0.0f;
     _clickY = 0.0f;
     _deltaX = 0.0f;
@@ -322,6 +323,11 @@ static OSStatus audioCallback(void *inRefCon,
 - (void)toggleMouse:(bool)mode
 {
   if (mode == _cursorVisible) return;
+
+  if (!mode && _mouseMode == 1)
+    CGWarpMouseCursorPosition(CGPointMake(NSMidX([_window frame]),
+                                          [[_window screen] frame].size.height -
+                                              NSMidY([_window frame])));
 
   mode ? [NSCursor unhide] : [NSCursor hide];
   CGAssociateMouseAndMouseCursorPosition(mode);
