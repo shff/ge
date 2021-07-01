@@ -243,6 +243,13 @@ static OSStatus audioCallback(void *inRefCon,
   _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8 w:w h:h];
 }
 
+- (void)setBuffer:(NSString *)name vertices:(float *)vertices size:(int)size
+{
+  _geometry[name] = [_device newBufferWithBytes:vertices
+                                         length:size
+                                        options:MTLResourceStorageModeShared];
+}
+
 - (id<MTLRenderPipelineState>)createShader:(NSString *)shader
 {
   id library = [_device newLibraryWithSource:shader options:nil error:NULL];
