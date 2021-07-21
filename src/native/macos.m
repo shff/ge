@@ -74,9 +74,10 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) id<MTLDevice> device;
 @property(nonatomic, assign) id<MTLCommandQueue> queue;
 @property(nonatomic, assign) CAMetalLayer *layer;
-@property(nonatomic, assign) id<MTLTexture> depthTexture, albedoTexture;
+@property(nonatomic, assign) id<MTLTexture> depthTexture;
 @property(nonatomic, assign) id<MTLRenderPipelineState> quadShader, postShader;
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
+@property(nonatomic, assign) NSMutableArray *buffers;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) double timerCurrent, lag;
 @property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
@@ -204,7 +205,8 @@ static OSStatus audioCallback(void *inRefCon,
     id buffer = [_queue commandBuffer];
 
     // Geometry Pass
-    _quadPass.colorAttachments[0].texture = _albedoTexture;
+    for (unsigned int i = 0; i < [_buffers count]; i++)
+      _quadPass.colorAttachments[i].texture = _buffers[i];
     _quadPass.depthAttachment.texture = _depthTexture;
     id encoder1 = [buffer renderCommandEncoderWithDescriptor:_quadPass];
     [encoder1 setRenderPipelineState:_quadShader];
@@ -220,7 +222,8 @@ static OSStatus audioCallback(void *inRefCon,
     _postPass.depthAttachment.texture = _depthTexture;
     id encoder2 = [buffer renderCommandEncoderWithDescriptor:_postPass];
     [encoder2 setRenderPipelineState:_postShader];
-    [encoder2 setFragmentTexture:_albedoTexture atIndex:0];
+    for (unsigned int i = 0; i < [_buffers count]; i++)
+      [encoder2 setFragmentTexture:_buffers[i] atIndex:i];
     [encoder2 drawPrimitives:4 vertexStart:0 vertexCount:4];
     [encoder2 endEncoding];
 
@@ -236,7 +239,8 @@ static OSStatus audioCallback(void *inRefCon,
   [_layer setDrawableSize:size];
   int w = size.width, h = size.height;
 
-  _albedoTexture = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:w h:h];
+  _buffers = [[NSMutableArray alloc] init];
+  _buffers[0] = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:w h:h];
   _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8 w:w h:h];
 }
 
