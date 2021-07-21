@@ -1,6 +1,6 @@
 [package]
 name = "vigier"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Silvio Henrique Ferreira <shferreira@me.com>"]
 license = "MIT"
 description = "Lightweight game library"
