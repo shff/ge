@@ -135,7 +135,7 @@ static OSStatus audioCallback(void *inRefCon,
   _layer.device = _device;
   [[_window.rootViewController.view layer] addSublayer:_layer];
 
-  // Final State
+  // Create Passes, Shaders and Buffers
   _geometry = [[NSMutableDictionary alloc] init];
   _postShader = [self createShader:postShader];
   _postPass = [self createPass:1 with:MTLLoadActionLoad];
