@@ -78,6 +78,7 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) id<MTLRenderPipelineState> quadShader, postShader;
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
+@property(nonatomic, assign) NSMutableArray *keysDown;
 @property(nonatomic, assign) double timerCurrent, lag;
 @property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
 @property(nonatomic, assign) int mouseMode, cursorVisible;
@@ -150,6 +151,7 @@ static OSStatus audioCallback(void *inRefCon,
     [_window.contentView setLayer:_layer];
 
     // Create Passes, Shaders and Buffers
+    _keysDown = [[NSMutableArray alloc] init];
     _geometry = [[NSMutableDictionary alloc] init];
     _postShader = [self createShader:postShader];
     _postPass = [self createPass:1 with:MTLLoadActionLoad];
@@ -281,6 +283,18 @@ static OSStatus audioCallback(void *inRefCon,
 - (void)windowDidResize:(NSNotification *)notification
 {
   [self createBuffers];
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+  if (![event isARepeat])
+    [_keysDown addObject:[NSNumber numberWithInt:[event keyCode]]];
+}
+
+- (void)keyUp:(NSEvent *)event
+{
+  if (![event isARepeat])
+    [_keysDown removeObject:[NSNumber numberWithInt:[event keyCode]]];
 }
 
 - (void)mouseMoved:(NSEvent *)event
