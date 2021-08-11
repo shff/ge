@@ -3,6 +3,7 @@
 @import Metal;
 @import QuartzCore;
 @import AudioToolbox;
+#include "common.h"
 
 NSString *postShader =
     @"#include <metal_stdlib>\n"
@@ -34,14 +35,6 @@ NSString *quadShader =
      "{"
      "    return half4(0, 0, 0, 1);"
      "}";
-
-typedef struct
-{
-  short *data;
-  int state;
-  size_t position;
-  size_t length;
-} voice;
 
 static OSStatus audioCallback(void *inRefCon,
                               AudioUnitRenderActionFlags *ioActionFlags,
@@ -79,18 +72,17 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) NSMutableArray *keysDown;
-@property(nonatomic, assign) double timerCurrent, lag;
-@property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
-@property(nonatomic, assign) int mouseMode, cursorVisible;
+@property(nonatomic, assign) int cursorVisible;
 @property(nonatomic, assign) voice *voices;
+@property(nonatomic, assign) gameState *state;
 @end
 
 @implementation App
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
-  (void)notification;
   @autoreleasepool
   {
+    _state = malloc(sizeof(gameState));
     _voices = malloc(sizeof(voice) * 32);
     memset(_voices, 0, sizeof(voice) * 32);
 
@@ -160,16 +152,16 @@ static OSStatus audioCallback(void *inRefCon,
     [self createBuffers];
 
     // Initialize timer
-    _timerCurrent = CACurrentMediaTime();
-    _lag = 0.0;
+    _state->timerCurrent = CACurrentMediaTime();
+    _state->lag = 0.0;
 
     // Reset Deltas
-    _mouseMode = 2;
     _cursorVisible = 1;
-    _clickX = 0.0f;
-    _clickY = 0.0f;
-    _deltaX = 0.0f;
-    _deltaY = 0.0f;
+    _state->mouseMode = 2;
+    _state->clickX = 0.0f;
+    _state->clickY = 0.0f;
+    _state->deltaX = 0.0f;
+    _state->deltaY = 0.0f;
 
     // Initialize loop
     [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
@@ -188,19 +180,21 @@ static OSStatus audioCallback(void *inRefCon,
   {
     // Update Timer
     double timerNext = CACurrentMediaTime();
-    double timerDelta = timerNext - _timerCurrent;
-    _timerCurrent = timerNext;
+    double timerDelta = timerNext - _state->timerCurrent;
+    _state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (_lag += timerDelta; _lag >= 1.0 / 60.0; _lag -= 1.0 / 60.0)
+    for (_state->lag += timerDelta; _state->lag >= 1.0 / 60.0;
+         _state->lag -= 1.0 / 60.0)
     {
+      update(_state);
     }
 
     // Reset Deltas
-    _clickX = 0.0f;
-    _clickY = 0.0f;
-    _deltaX = 0.0f;
-    _deltaY = 0.0f;
+    _state->clickX = 0.0f;
+    _state->clickY = 0.0f;
+    _state->deltaX = 0.0f;
+    _state->deltaY = 0.0f;
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];
@@ -308,32 +302,32 @@ static OSStatus audioCallback(void *inRefCon,
 {
   if (![_window.contentView hitTest:[event locationInWindow]])
     [self toggleMouse:true];
-  else if (_mouseMode == 1)
+  else if (_state->mouseMode == 1)
   {
     [self toggleMouse:false];
-    _deltaX += [event deltaX];
-    _deltaY += [event deltaY];
+    _state->deltaX += [event deltaX];
+    _state->deltaY += [event deltaY];
   }
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
-  if (_mouseMode == 2) [self toggleMouse:true];
+  if (_state->mouseMode == 2) [self toggleMouse:true];
   if ([event clickCount])
   {
-    _clickX = [event locationInWindow].x;
-    _clickY = [event locationInWindow].y;
+    _state->clickX = [event locationInWindow].x;
+    _state->clickY = [event locationInWindow].y;
   }
 }
 
 - (void)mouseDragged:(NSEvent *)event
 {
   if (![_window.contentView hitTest:[event locationInWindow]]) return;
-  if (_mouseMode != 2) return;
+  if (_state->mouseMode != 2) return;
 
   [self toggleMouse:false];
-  _deltaX += [event deltaX];
-  _deltaY += [event deltaY];
+  _state->deltaX += [event deltaX];
+  _state->deltaY += [event deltaY];
 }
 
 - (void)windowWillClose:(NSWindow *)sender
@@ -345,7 +339,7 @@ static OSStatus audioCallback(void *inRefCon,
 {
   if (mode == _cursorVisible) return;
 
-  if (!mode && _mouseMode == 1)
+  if (!mode && _state->mouseMode == 1)
     CGWarpMouseCursorPosition(CGPointMake(NSMidX([_window frame]),
                                           [[_window screen] frame].size.height -
                                               NSMidY([_window frame])));

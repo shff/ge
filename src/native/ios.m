@@ -3,6 +3,7 @@
 @import Metal;
 @import QuartzCore;
 @import AudioToolbox;
+#include "common.h"
 
 NSString *postShader =
     @"#include <metal_stdlib>\n"
@@ -34,14 +35,6 @@ NSString *quadShader =
      "{"
      "    return half4(0, 0, 0, 1);"
      "}";
-
-typedef struct
-{
-  short *data;
-  int state;
-  size_t position;
-  size_t length;
-} voice;
 
 static OSStatus audioCallback(void *inRefCon,
                               AudioUnitRenderActionFlags *ioActionFlags,
@@ -78,15 +71,14 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) id<MTLRenderPipelineState> quadShader, postShader;
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
-@property(nonatomic, assign) double timerCurrent, lag;
-@property(nonatomic, assign) int mouseMode;
-@property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
 @property(nonatomic, assign) voice *voices;
+@property(nonatomic, assign) gameState *state;
 @end
 
 @implementation App
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
+  _state = malloc(sizeof(gameState));
   _voices = malloc(sizeof(voice) * 32);
   memset(_voices, 0, sizeof(voice) * 32);
 
@@ -94,6 +86,7 @@ static OSStatus audioCallback(void *inRefCon,
   [UIApplication sharedApplication].idleTimerDisabled = YES;
 
   // Initialize Audio
+  AudioUnit audioUnit;
   AudioComponentDescription compDesc = {
       .componentType = kAudioUnitType_Output,
       .componentSubType = kAudioUnitSubType_GenericOutput,
@@ -109,9 +102,6 @@ static OSStatus audioCallback(void *inRefCon,
       .mFramesPerPacket = 1,
       .mBytesPerFrame = 2,
       .mBytesPerPacket = 2};
-
-  // Initialize Audio
-  AudioUnit audioUnit;
   AudioComponentInstanceNew(AudioComponentFindNext(0, &compDesc), &audioUnit);
   AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat,
                        kAudioUnitScope_Input, 0, &audioFormat,
@@ -144,15 +134,15 @@ static OSStatus audioCallback(void *inRefCon,
   [self createBuffers];
 
   // Initialize timer
-  _timerCurrent = CACurrentMediaTime();
-  _lag = 0.0;
+  _state->timerCurrent = CACurrentMediaTime();
+  _state->lag = 0.0;
 
   // Reset Deltas
-  _mouseMode = 2;
-  _clickX = 0.0f;
-  _clickY = 0.0f;
-  _deltaX = 0.0f;
-  _deltaY = 0.0f;
+  _state->mouseMode = 2;
+  _state->clickX = 0.0f;
+  _state->clickY = 0.0f;
+  _state->deltaX = 0.0f;
+  _state->deltaY = 0.0f;
 
   // Add gesture recognizers
   [_window.rootViewController.view
@@ -183,19 +173,20 @@ static OSStatus audioCallback(void *inRefCon,
   {
     // Update Timer
     double timerNext = CACurrentMediaTime();
-    double timerDelta = timerNext - _timerCurrent;
-    _timerCurrent = timerNext;
+    double timerDelta = timerNext - _state->timerCurrent;
+    _state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (_lag += timerDelta; _lag >= 1.0 / 60.0; _lag -= 1.0 / 60.0)
+    for (_state->lag += timerDelta; _state->lag >= 1.0 / 60.0;
+         _state->lag -= 1.0 / 60.0)
     {
     }
 
     // Reset Deltas
-    _clickX = 0.0f;
-    _clickY = 0.0f;
-    _deltaX = 0.0f;
-    _deltaY = 0.0f;
+    _state->clickX = 0.0f;
+    _state->clickY = 0.0f;
+    _state->deltaX = 0.0f;
+    _state->deltaY = 0.0f;
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];
@@ -230,19 +221,21 @@ static OSStatus audioCallback(void *inRefCon,
 
 - (void)onTap:(UITapGestureRecognizer *)recognizer
 {
-  if (_mouseMode != 1 && recognizer.state == UIGestureRecognizerStateRecognized)
+  if (_state->mouseMode != 1 &&
+      recognizer.state == UIGestureRecognizerStateRecognized)
   {
-    _clickX = [recognizer locationInView:recognizer.view].x;
-    _clickY = [recognizer locationInView:recognizer.view].y;
+    _state->clickX = [recognizer locationInView:recognizer.view].x;
+    _state->clickY = [recognizer locationInView:recognizer.view].y;
   }
 }
 
 - (void)onDrag:(UIPanGestureRecognizer *)recognizer
 {
-  if (_mouseMode != 0 && recognizer.state == UIGestureRecognizerStateRecognized)
+  if (_state->mouseMode != 0 &&
+      recognizer.state == UIGestureRecognizerStateRecognized)
   {
-    _deltaX += [recognizer translationInView:recognizer.view].y;
-    _deltaY += [recognizer translationInView:recognizer.view].y;
+    _state->deltaX += [recognizer translationInView:recognizer.view].y;
+    _state->deltaY += [recognizer translationInView:recognizer.view].y;
   }
 }
 
