@@ -138,10 +138,7 @@ void android_main(struct android_app *app)
   state->lag = 0.0;
 
   // Reset Deltas
-  state->clickX = 0.0f;
-  state->clickY = 0.0f;
-  state->deltaX = 0.0f;
-  state->deltaY = 0.0f;
+  state->clickX = state->clickY = state->deltaX = state->deltaY = 0.0f;
 
   int events = 0;
   struct android_poll_source *source;
@@ -166,10 +163,7 @@ void android_main(struct android_app *app)
     }
 
     // Reset Deltas
-    state->clickX = 0.0f;
-    state->clickY = 0.0f;
-    state->deltaX = 0.0f;
-    state->deltaY = 0.0f;
+    state->clickX = state->clickY = state->deltaX = state->deltaY = 0.0f;
 
     // Renderer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);

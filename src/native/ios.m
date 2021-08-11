@@ -137,10 +137,7 @@ static OSStatus audioCallback(void *inRefCon,
   _state->timerCurrent = CACurrentMediaTime();
   _state->lag = 0.0;
   _state->mouseMode = 2;
-  _state->clickX = 0.0f;
-  _state->clickY = 0.0f;
-  _state->deltaX = 0.0f;
-  _state->deltaY = 0.0f;
+  _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
 
   // Add gesture recognizers
   [_window.rootViewController.view
@@ -182,10 +179,7 @@ static OSStatus audioCallback(void *inRefCon,
     }
 
     // Reset Deltas
-    _state->clickX = 0.0f;
-    _state->clickY = 0.0f;
-    _state->deltaX = 0.0f;
-    _state->deltaY = 0.0f;
+    _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];

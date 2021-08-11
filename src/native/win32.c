@@ -187,15 +187,11 @@ int main(int argc, char const *argv[])
   long long timerResolution;
   QueryPerformanceFrequency((LARGE_INTEGER *)&timerResolution);
   QueryPerformanceCounter((LARGE_INTEGER *)&state->timerCurrent);
-  double lag = 0;
+  state->lag = 0;
 
   // Reset Deltas
-  state->deltaX = 0.0f;
-  state->deltaY = 0.0f;
-  state->clickX = 0.0f;
-  state->clickY = 0.0f;
-  mouseX = 0.0f;
-  mouseY = 0.0f;
+  state->deltaX = state->deltaY = state->clickX = state->clickY = 0.0f;
+  mouseX = mouseY = 0.0f;
 
   MSG msg = {0};
   while (msg.message != WM_QUIT)
@@ -231,10 +227,7 @@ int main(int argc, char const *argv[])
     }
 
     // Reset Deltas
-    state->deltaX = 0.0f;
-    state->deltaY = 0.0f;
-    state->clickX = 0.0f;
-    state->clickY = 0.0f;
+    state->deltaX = state->deltaY = state->clickX = state->clickY = 0.0f;
 
     // Set Viewport and Blank Colors
     RECT rect;

@@ -213,9 +213,6 @@ int main()
     // Reset mouse vars
     state->clickX = 0, state->clickY = 0, state->deltaX = 0, state->deltaY = 0;
 
-    (void)state->clickX;
-    (void)state->clickY;
-
     // Render to G-Buffer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
