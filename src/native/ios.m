@@ -178,6 +178,7 @@ static OSStatus audioCallback(void *inRefCon,
     for (_state->lag += timerDelta; _state->lag >= 1.0 / 60.0;
          _state->lag -= 1.0 / 60.0)
     {
+      update(_state);
     }
 
     // Reset Deltas

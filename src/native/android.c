@@ -1,3 +1,4 @@
+#include "common.h"
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <SLES/OpenSLES_Android.h>
@@ -10,7 +11,8 @@ SLEngineItf audioInterface;
 SLObjectItf audioOutput;
 unsigned int gbuffer;
 int32_t prevId;
-float prevX, prevY, touchPosX, touchPosY, moveDeltaX, moveDeltaY;
+float prevX, prevY;
+gameState *state;
 
 static void engine_handle_cmd(struct android_app *app, int32_t cmd)
 {
@@ -107,13 +109,13 @@ static int32_t engine_handle_input(struct android_app *app, AInputEvent *e)
   if (action == AMOTION_EVENT_ACTION_MOVE && !isTap && isSame && isMove &&
       isOne)
   {
-    moveDeltaX += deltaX;
-    moveDeltaY += deltaY;
+    state->deltaX += deltaX;
+    state->deltaY += deltaY;
   }
   if (action == AMOTION_EVENT_ACTION_UP && isTap && isSame && !isMove && isOne)
   {
-    touchPosX = deltaX;
-    touchPosY = deltaY;
+    state->clickX = deltaX;
+    state->clickY = deltaY;
   }
   if (action == AMOTION_EVENT_ACTION_DOWN)
   {
@@ -132,14 +134,14 @@ void android_main(struct android_app *app)
   // Start the Timer
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
-  uint64_t timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
-  uint64_t lag = 0.0;
+  state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
+  state->lag = 0.0;
 
   // Reset Deltas
-  touchPosX = 0.0f;
-  touchPosY = 0.0f;
-  moveDeltaX = 0.0f;
-  moveDeltaY = 0.0f;
+  state->clickX = 0.0f;
+  state->clickY = 0.0f;
+  state->deltaX = 0.0f;
+  state->deltaY = 0.0f;
 
   int events = 0;
   struct android_poll_source *source;
@@ -153,19 +155,21 @@ void android_main(struct android_app *app)
     // Update Timer
     clock_gettime(CLOCK_MONOTONIC, &time);
     uint64_t timerNext = (time.tv_sec * 10E8 + time.tv_nsec);
-    uint64_t timerDelta = timerNext - timerCurrent;
-    timerCurrent = timerNext;
+    uint64_t timerDelta = timerNext - state->timerCurrent;
+    state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
+    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
+         state->lag -= 1.0 / 60.0)
     {
+      update(state);
     }
 
     // Reset Deltas
-    touchPosX = 0.0f;
-    touchPosY = 0.0f;
-    moveDeltaX = 0.0f;
-    moveDeltaY = 0.0f;
+    state->clickX = 0.0f;
+    state->clickY = 0.0f;
+    state->deltaX = 0.0f;
+    state->deltaY = 0.0f;
 
     // Renderer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);

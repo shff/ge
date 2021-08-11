@@ -1,3 +1,4 @@
+#include "common.h"
 #include <d3d11.h>
 #include <dsound.h>
 #include <windows.h>
@@ -9,8 +10,8 @@
 #pragma comment(lib, "dsound")
 #pragma comment(lib, "xinput")
 
-unsigned int mouseMode = 0;
-float mouseX, mouseY, clickX, clickY, deltaX, deltaY;
+gameState *state;
+float mouseX, mouseY;
 WINDOWPLACEMENT placement = {0};
 
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam,
@@ -21,24 +22,24 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam,
     mouseX = LOWORD(lParam);
     mouseY = HIWORD(lParam);
   }
-  else if (message == WM_LBUTTONUP && deltaX + deltaY > 0.0f)
+  else if (message == WM_LBUTTONUP && state->deltaX + state->deltaY > 0.0f)
   {
-    if (mouseMode != 1)
+    if (state->mouseMode != 1)
     {
       ClipCursor(NULL);
       SetCursor(LoadCursorW(NULL, (LPCWSTR)IDC_ARROW));
     }
-    clickX = LOWORD(lParam);
-    clickY = HIWORD(lParam);
+    state->clickX = LOWORD(lParam);
+    state->clickY = HIWORD(lParam);
   }
-  else if (message == WM_MOUSEMOVE && wParam == mouseMode - 1)
+  else if (message == WM_MOUSEMOVE && wParam == state->mouseMode - 1)
   {
     RECT rect;
     GetWindowRect(window, &rect);
     ClipCursor(&rect);
     SetCursor(NULL);
-    mouseX += (deltaX = LOWORD(lParam) - mouseX);
-    mouseY += (deltaY = HIWORD(lParam) - mouseY);
+    mouseX += (state->deltaX = LOWORD(lParam) - mouseX);
+    mouseY += (state->deltaY = HIWORD(lParam) - mouseY);
   }
   else if (message == WM_DESTROY)
   {
@@ -73,6 +74,8 @@ LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam,
 
 int main(int argc, char const *argv[])
 {
+  state = malloc(sizeof(gameState));
+
   // Disable Screensaver
   SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED);
 
@@ -182,16 +185,17 @@ int main(int argc, char const *argv[])
 
   // Start the Timer
   long long timerResolution;
-  long long timerCurrent;
   QueryPerformanceFrequency((LARGE_INTEGER *)&timerResolution);
-  QueryPerformanceCounter((LARGE_INTEGER *)&timerCurrent);
+  QueryPerformanceCounter((LARGE_INTEGER *)&state->timerCurrent);
   double lag = 0;
 
   // Reset Deltas
+  state->deltaX = 0.0f;
+  state->deltaY = 0.0f;
+  state->clickX = 0.0f;
+  state->clickY = 0.0f;
   mouseX = 0.0f;
   mouseY = 0.0f;
-  clickX = 0.0f;
-  clickY = 0.0f;
 
   MSG msg = {0};
   while (msg.message != WM_QUIT)
@@ -203,31 +207,34 @@ int main(int argc, char const *argv[])
     }
 
     // Get joystick input
-    XINPUT_STATE state = {0};
-    if (XInputGetState(0, &state) == ERROR_SUCCESS)
+    XINPUT_STATE xState = {0};
+    if (XInputGetState(0, &xState) == ERROR_SUCCESS)
     {
-      deltaX += state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT;
-      deltaX -= state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT;
-      deltaY += state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN;
-      deltaY -= state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP;
+      state->deltaX += xState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT;
+      state->deltaX -= xState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT;
+      state->deltaY += xState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN;
+      state->deltaY -= xState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP;
     }
 
     // Update Timer
     long long timerNext;
     QueryPerformanceCounter((LARGE_INTEGER *)&timerNext);
-    double timerDelta = (timerNext - timerCurrent) * 10E8 / timerResolution;
-    timerCurrent = timerNext;
+    double timerDelta =
+        (timerNext - state->timerCurrent) * 10E8 / timerResolution;
+    state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
+    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
+         state->lag -= 1.0 / 60.0)
     {
+      update(state);
     }
 
     // Reset Deltas
-    deltaX = 0.0f;
-    deltaY = 0.0f;
-    clickX = 0.0f;
-    clickY = 0.0f;
+    state->deltaX = 0.0f;
+    state->deltaY = 0.0f;
+    state->clickX = 0.0f;
+    state->clickY = 0.0f;
 
     // Set Viewport and Blank Colors
     RECT rect;

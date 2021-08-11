@@ -1,3 +1,4 @@
+#include "common.h"
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
@@ -116,15 +117,17 @@ int main()
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthbuffer, 0);
   glDrawBuffers(2, (GLenum[]){GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT});
 
+  gameState *state = malloc(sizeof(gameState));
+  int mouseX = 0;
+  int mouseY = 0;
+  state->clickX = 0, state->clickY = 0, state->deltaX = 0, state->deltaY = 0;
+
   // Start the Timer
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
-  uint64_t timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
-  uint64_t lag = 0.0;
+  state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
+  state->lag = 0.0;
   uint64_t xscreenLag = 0.0;
-
-  unsigned int mouseMode = 0;
-  int mouseX = 0, mouseY = 0, clickX = 0, clickY = 0, deltaX = 0, deltaY = 0;
 
   while (1)
   {
@@ -135,14 +138,14 @@ int main()
       break;
 
     // Mouse Cursor
-    if (e.type == MotionNotify && e.xbutton.button == mouseMode - 1)
+    if (e.type == MotionNotify && e.xbutton.button == state->mouseMode - 1)
     {
       XGrabPointer(display, window, True,
                    ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                    GrabModeAsync, GrabModeAsync, window, None, CurrentTime);
       XDefineCursor(display, window, None);
-      mouseX += (deltaX = e.xmotion.x - mouseX);
-      mouseX += (deltaY = e.xmotion.y - mouseY);
+      mouseX += (state->deltaX = e.xmotion.x - mouseX);
+      mouseX += (state->deltaY = e.xmotion.y - mouseY);
     }
     else if (e.type == ButtonPress && e.xbutton.button == 1)
     {
@@ -150,11 +153,11 @@ int main()
       mouseY = e.xmotion.y;
     }
     else if (e.type == ButtonRelease && e.xbutton.button == 1 &&
-             deltaY + deltaY == 0.0f)
+             state->deltaY + state->deltaY == 0.0f)
     {
-      if (mouseMode != 1) XUngrabPointer(display, CurrentTime);
-      clickX = e.xmotion.x;
-      clickY = e.xmotion.y;
+      if (state->mouseMode != 1) XUngrabPointer(display, CurrentTime);
+      state->clickX = e.xmotion.x;
+      state->clickY = e.xmotion.y;
     }
     else if (e.type == KeyPress && e.xkey.keycode == 13 &&
              e.xkey.state & Mod1Mask)
@@ -189,8 +192,8 @@ int main()
     // Update Timer
     clock_gettime(CLOCK_MONOTONIC, &time);
     uint64_t timerNext = (time.tv_sec * 10E8 + time.tv_nsec);
-    uint64_t timerDelta = timerNext - timerCurrent;
-    timerCurrent = timerNext;
+    uint64_t timerDelta = timerNext - state->timerCurrent;
+    state->timerCurrent = timerNext;
 
     // Periodically reset the screensaver
     xscreenLag += timerDelta;
@@ -201,15 +204,17 @@ int main()
     }
 
     // Fixed updates
-    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
+    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
+         state->lag -= 1.0 / 60.0)
     {
+      update(state);
     }
 
     // Reset mouse vars
-    clickX = 0, clickY = 0, deltaX = 0, deltaY = 0;
+    state->clickX = 0, state->clickY = 0, state->deltaX = 0, state->deltaY = 0;
 
-    (void)clickX;
-    (void)clickY;
+    (void)state->clickX;
+    (void)state->clickY;
 
     // Render to G-Buffer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);
