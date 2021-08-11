@@ -133,11 +133,9 @@ static OSStatus audioCallback(void *inRefCon,
   _quadPass = [self createPass:1 with:MTLLoadActionClear];
   [self createBuffers];
 
-  // Initialize timer
+  // Initialize state
   _state->timerCurrent = CACurrentMediaTime();
   _state->lag = 0.0;
-
-  // Reset Deltas
   _state->mouseMode = 2;
   _state->clickX = 0.0f;
   _state->clickY = 0.0f;

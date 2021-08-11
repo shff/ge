@@ -72,7 +72,6 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) NSMutableArray *keysDown;
-@property(nonatomic, assign) int cursorVisible;
 @property(nonatomic, assign) voice *voices;
 @property(nonatomic, assign) gameState *state;
 @end
@@ -151,12 +150,9 @@ static OSStatus audioCallback(void *inRefCon,
     _quadPass = [self createPass:1 with:MTLLoadActionClear];
     [self createBuffers];
 
-    // Initialize timer
+    // Initialize state
     _state->timerCurrent = CACurrentMediaTime();
     _state->lag = 0.0;
-
-    // Reset Deltas
-    _cursorVisible = 1;
     _state->mouseMode = 2;
     _state->clickX = 0.0f;
     _state->clickY = 0.0f;
@@ -337,7 +333,8 @@ static OSStatus audioCallback(void *inRefCon,
 
 - (void)toggleMouse:(bool)mode
 {
-  if (mode == _cursorVisible) return;
+  static int cursorVisible = 1;
+  if (mode == cursorVisible) return;
 
   if (!mode && _state->mouseMode == 1)
     CGWarpMouseCursorPosition(CGPointMake(NSMidX([_window frame]),
@@ -346,7 +343,7 @@ static OSStatus audioCallback(void *inRefCon,
 
   mode ? [NSCursor unhide] : [NSCursor hide];
   CGAssociateMouseAndMouseCursorPosition(mode);
-  _cursorVisible = mode;
+  cursorVisible = mode;
 }
 @end
 

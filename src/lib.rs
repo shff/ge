@@ -10,4 +10,4 @@ pub struct State {
 }
 
 #[no_mangle]
-pub extern "C" fn update(state: State) {}
+pub extern "C" fn update(_state: State) {}
