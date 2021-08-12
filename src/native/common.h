@@ -1,6 +1,6 @@
 typedef struct
 {
-  double timerCurrent, lag;
+  double timerCurrent;
   float clickX, clickY, deltaX, deltaY;
   int mouseMode;
 } gameState;

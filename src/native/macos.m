@@ -73,6 +73,7 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) NSMutableArray *keysDown;
 @property(nonatomic, assign) int cursorVisible;
+@property(nonatomic, assign) double lag;
 @property(nonatomic, assign) voice *voices;
 @property(nonatomic, assign) gameState *state;
 @end
@@ -153,9 +154,9 @@ static OSStatus audioCallback(void *inRefCon,
 
     // Initialize state
     _state->timerCurrent = CACurrentMediaTime();
-    _state->lag = 0.0;
     _state->mouseMode = 2;
     _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+    _lag = 0.0;
     _cursorVisible = 1;
 
     // Initialize loop
@@ -179,8 +180,7 @@ static OSStatus audioCallback(void *inRefCon,
     _state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (_state->lag += timerDelta; _state->lag >= 1.0 / 60.0;
-         _state->lag -= 1.0 / 60.0)
+    for (_lag += timerDelta; _lag >= 1.0 / 60.0; _lag -= 1.0 / 60.0)
     {
       update(_state);
     }

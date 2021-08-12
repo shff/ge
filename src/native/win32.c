@@ -187,7 +187,7 @@ int main(int argc, char const *argv[])
   long long timerResolution;
   QueryPerformanceFrequency((LARGE_INTEGER *)&timerResolution);
   QueryPerformanceCounter((LARGE_INTEGER *)&state->timerCurrent);
-  state->lag = 0;
+  double lag = 0;
 
   // Reset Deltas
   state->deltaX = state->deltaY = state->clickX = state->clickY = 0.0f;
@@ -220,8 +220,7 @@ int main(int argc, char const *argv[])
     state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
-         state->lag -= 1.0 / 60.0)
+    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
       update(state);
     }

@@ -126,7 +126,7 @@ int main()
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
   state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
-  state->lag = 0.0;
+  uint64_t lag = 0.0;
   uint64_t xscreenLag = 0.0;
 
   while (1)
@@ -204,8 +204,7 @@ int main()
     }
 
     // Fixed updates
-    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
-         state->lag -= 1.0 / 60.0)
+    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
       update(state);
     }

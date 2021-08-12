@@ -1,7 +1,6 @@
 #[repr(C)]
 pub struct State {
     timer: f64,
-    lag: f64,
     click_x: f32,
     click_y: f32,
     delta_x: f32,

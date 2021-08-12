@@ -135,7 +135,7 @@ void android_main(struct android_app *app)
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
   state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
-  state->lag = 0.0;
+  uint64_t lag = 0.0;
 
   // Reset Deltas
   state->clickX = state->clickY = state->deltaX = state->deltaY = 0.0f;
@@ -156,8 +156,7 @@ void android_main(struct android_app *app)
     state->timerCurrent = timerNext;
 
     // Fixed updates
-    for (state->lag += timerDelta; state->lag >= 1.0 / 60.0;
-         state->lag -= 1.0 / 60.0)
+    for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
       update(state);
     }
