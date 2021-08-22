@@ -159,6 +159,10 @@ static OSStatus audioCallback(void *inRefCon,
     _lag = 0.0;
     _cursorVisible = 1;
 
+    [self setBuffer:@"tri"
+           vertices:(float[]){0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0}
+               size:9 * sizeof(float)];
+
     // Initialize loop
     [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
                                      target:self
@@ -193,25 +197,34 @@ static OSStatus audioCallback(void *inRefCon,
     id buffer = [_queue commandBuffer];
 
     // Geometry Pass
-    _quadPass.colorAttachments[0].texture = _albedoTexture;
-    _quadPass.depthAttachment.texture = _depthTexture;
-    id encoder1 = [buffer renderCommandEncoderWithDescriptor:_quadPass];
-    [encoder1 setRenderPipelineState:_quadShader];
-    for (id buffer in _geometry.objectEnumerator)
-    {
-      [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
-      [encoder1 drawPrimitives:3 vertexStart:0 vertexCount:3];
-    }
-    [encoder1 endEncoding];
+    [self drawPass:_quadPass
+            buffer:buffer
+          drawable:drawable
+              with:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setRenderPipelineState:_quadShader];
+                for (id buffer in _geometry.objectEnumerator)
+                {
+                  [encoder setVertexBuffer:buffer offset:0 atIndex:0];
+                  [encoder drawPrimitives:3 vertexStart:0 vertexCount:3];
+                }
+              }];
 
     // Post-Processing Pass
-    _postPass.colorAttachments[0].texture = drawable.texture;
-    _postPass.depthAttachment.texture = _depthTexture;
-    id encoder2 = [buffer renderCommandEncoderWithDescriptor:_postPass];
-    [encoder2 setRenderPipelineState:_postShader];
-    [encoder2 setFragmentTexture:_albedoTexture atIndex:0];
-    [encoder2 drawPrimitives:4 vertexStart:0 vertexCount:4];
-    [encoder2 endEncoding];
+    [self drawPass:_postPass
+            buffer:buffer
+          drawable:drawable
+              with:^(id<MTLRenderCommandEncoder> encoder) {
+                [encoder setRenderPipelineState:_postShader];
+                [encoder setFragmentTexture:_albedoTexture atIndex:0];
+                [encoder drawPrimitives:4 vertexStart:0 vertexCount:4];
+              }];
+    // _postPass.colorAttachments[0].texture = drawable.texture;
+    // _postPass.depthAttachment.texture = _depthTexture;
+    // id encoder2 = [buffer renderCommandEncoderWithDescriptor:_postPass];
+    // [encoder2 setRenderPipelineState:_postShader];
+    // [encoder2 setFragmentTexture:_albedoTexture atIndex:0];
+    // [encoder2 drawPrimitives:4 vertexStart:0 vertexCount:4];
+    // [encoder2 endEncoding];
 
     // Render
     [buffer presentDrawable:drawable];
@@ -260,6 +273,22 @@ static OSStatus audioCallback(void *inRefCon,
   pass.depthAttachment.loadAction = action;
   pass.depthAttachment.storeAction = MTLStoreActionStore;
   return pass;
+}
+
+- (void)drawPass:(MTLRenderPassDescriptor *)pass
+          buffer:(id<MTLCommandBuffer>)buffer
+        drawable:(id<CAMetalDrawable>)drawable
+            with:(void (^)(id<MTLRenderCommandEncoder>))block
+{
+  if (pass.colorAttachments[0].loadAction == MTLLoadActionClear)
+    pass.colorAttachments[0].texture = _albedoTexture;
+  else
+    pass.colorAttachments[0].texture = drawable.texture;
+  pass.depthAttachment.texture = _depthTexture;
+  id encoder = [buffer renderCommandEncoderWithDescriptor:pass];
+  [encoder setRenderPipelineState:_quadShader];
+  block(encoder);
+  [encoder endEncoding];
 }
 
 - (id<MTLTexture>)newTexture:(MTLPixelFormat)format w:(int)w h:(int)h
