@@ -160,6 +160,7 @@ static OSStatus audioCallback(void *inRefCon,
     _state->timerCurrent = CACurrentMediaTime();
     _state->mouseMode = 2;
     _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+    _state->posX = _state->posY = _state->camX = _state->camY = 0.f;
     _state->posZ = 10.0f;
     _lag = 0.0;
     _cursorVisible = 1;
