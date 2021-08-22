@@ -88,28 +88,29 @@ static OSStatus audioCallback(void *inRefCon,
 
   // Initialize Audio
   AudioUnit audioUnit;
-  AudioComponentDescription compDesc = {
-      .componentType = kAudioUnitType_Output,
-      .componentSubType = kAudioUnitSubType_GenericOutput,
-      .componentManufacturer = kAudioUnitManufacturer_Apple};
+  AudioComponentDescription compDesc = { .componentType = kAudioUnitType_Output,
+                                         .componentSubType =
+                                             kAudioUnitSubType_GenericOutput,
+                                         .componentManufacturer =
+                                             kAudioUnitManufacturer_Apple };
   AudioStreamBasicDescription audioFormat = {
-      .mSampleRate = 44100.00,
-      .mFormatID = kAudioFormatLinearPCM,
-      .mFormatFlags = kAudioFormatFlagIsSignedInteger |
-                      kAudioFormatFlagIsPacked |
-                      kAudioFormatFlagIsNonInterleaved,
-      .mBitsPerChannel = 16,
-      .mChannelsPerFrame = 2,
-      .mFramesPerPacket = 1,
-      .mBytesPerFrame = 2,
-      .mBytesPerPacket = 2};
+    .mSampleRate = 44100.00,
+    .mFormatID = kAudioFormatLinearPCM,
+    .mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked |
+                    kAudioFormatFlagIsNonInterleaved,
+    .mBitsPerChannel = 16,
+    .mChannelsPerFrame = 2,
+    .mFramesPerPacket = 1,
+    .mBytesPerFrame = 2,
+    .mBytesPerPacket = 2
+  };
   AudioComponentInstanceNew(AudioComponentFindNext(0, &compDesc), &audioUnit);
   AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat,
                        kAudioUnitScope_Input, 0, &audioFormat,
                        sizeof(audioFormat));
   AudioUnitSetProperty(audioUnit, kAudioUnitProperty_SetRenderCallback,
                        kAudioUnitScope_Input, 0,
-                       &(AURenderCallbackStruct){audioCallback, _voices},
+                       &(AURenderCallbackStruct){ audioCallback, _voices },
                        sizeof(AURenderCallbackStruct));
   AudioUnitInitialize(audioUnit);
   AudioOutputUnitStart(audioUnit);

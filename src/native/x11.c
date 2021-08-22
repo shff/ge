@@ -96,7 +96,7 @@ int main()
       (void (*)())glXGetProcAddressARB((const unsigned char *)"glDrawBuffers");
 
   // Initialize OpenGL
-  int att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
+  int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
   XVisualInfo *vi = glXChooseVisual(display, 0, att);
   GLXContext context = glXCreateContext(display, vi, 0, 1);
   glXMakeCurrent(display, window, context);
@@ -115,7 +115,7 @@ int main()
   glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, backbuffer, 0);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthbuffer, 0);
-  glDrawBuffers(2, (GLenum[]){GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT});
+  glDrawBuffers(2, (GLenum[]){ GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT });
 
   gameState *state = malloc(sizeof(gameState));
   int mouseX = 0;
@@ -165,12 +165,12 @@ int main()
       fullscreen = !fullscreen;
       XSendEvent(display, root, False,
                  SubstructureNotifyMask | SubstructureRedirectMask,
-                 &(XEvent){.xclient.window = window,
-                           .xclient.format = 32,
-                           .xclient.message_type = stateAtom,
-                           .xclient.data.l[0] = fullscreen,
-                           .xclient.data.l[1] = fullscreenAtom,
-                           .xclient.data.l[3] = 1});
+                 &(XEvent){ .xclient.window = window,
+                            .xclient.format = 32,
+                            .xclient.message_type = stateAtom,
+                            .xclient.data.l[0] = fullscreen,
+                            .xclient.data.l[1] = fullscreenAtom,
+                            .xclient.data.l[3] = 1 });
     }
 
     // Toggle Fullscreen
@@ -178,7 +178,7 @@ int main()
              e.xkey.state & Mod1Mask)
     {
       fullscreen = !fullscreen;
-      XEvent event = {0};
+      XEvent event = { 0 };
       event.xclient.window = window;
       event.xclient.format = 32;
       event.xclient.message_type = stateAtom;

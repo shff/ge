@@ -23,11 +23,11 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd)
     eglInitialize(display, 0, 0);
 
     // Set Format
-    const EGLint attribs[] = {EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                              EGL_BLUE_SIZE,    8,
-                              EGL_GREEN_SIZE,   8,
-                              EGL_RED_SIZE,     8,
-                              EGL_NONE};
+    const EGLint attribs[] = { EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+                               EGL_BLUE_SIZE,    8,
+                               EGL_GREEN_SIZE,   8,
+                               EGL_RED_SIZE,     8,
+                               EGL_NONE };
     EGLConfig config;
     EGLint numConfigs, format;
     eglChooseConfig(display, attribs, &config, 1, &numConfigs);
@@ -75,7 +75,7 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd)
                            backbuffer, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
                            depthbuffer, 0);
-    glDrawBuffers(2, (GLenum[]){GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT});
+    glDrawBuffers(2, (GLenum[]){ GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT });
 
     // OpenGL Configuration
     glEnable(GL_CULL_FACE);
@@ -84,7 +84,7 @@ static void engine_handle_cmd(struct android_app *app, int32_t cmd)
 
     // Initialize Audio
     SLObjectItf engine;
-    const SLboolean req[1] = {0};
+    const SLboolean req[1] = { 0 };
     slCreateEngine(&engine, 0, 0, 0, 0, 0);
     (*engine)->Realize(engine, 0);
     (*engine)->GetInterface(engine, SL_IID_ENGINE, &audioInterface);

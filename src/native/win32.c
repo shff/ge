@@ -12,7 +12,7 @@
 
 gameState *state;
 float mouseX, mouseY;
-WINDOWPLACEMENT placement = {0};
+WINDOWPLACEMENT placement = { 0 };
 
 LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wParam,
                             LPARAM lParam)
@@ -81,9 +81,9 @@ int main(int argc, char const *argv[])
 
   // Create Window
   HINSTANCE instance = GetModuleHandleW(NULL);
-  RegisterClass(&(WNDCLASS){.lpfnWndProc = WindowProc,
-                            .hInstance = GetModuleHandle(NULL),
-                            .lpszClassName = "App"});
+  RegisterClass(&(WNDCLASS){ .lpfnWndProc = WindowProc,
+                             .hInstance = GetModuleHandle(NULL),
+                             .lpszClassName = "App" });
   HWND window = CreateWindowEx(0, "App", "App", WS_OVERLAPPEDWINDOW,
                                CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                                CW_USEDEFAULT, NULL, NULL, instance, NULL);
@@ -95,38 +95,38 @@ int main(int argc, char const *argv[])
   dsound->lpVtbl->SetCooperativeLevel(dsound, window, DSSCL_PRIORITY);
 
   // Create Primary Audio Buffer
-  DSBUFFERDESC bufferDesc1 = {.dwSize = sizeof(DSBUFFERDESC),
-                              .dwFlags = DSBCAPS_PRIMARYBUFFER};
+  DSBUFFERDESC bufferDesc1 = { .dwSize = sizeof(DSBUFFERDESC),
+                               .dwFlags = DSBCAPS_PRIMARYBUFFER };
   LPDIRECTSOUNDBUFFER primaryBuffer;
   dsound->lpVtbl->CreateSoundBuffer(dsound, &bufferDesc1, &primaryBuffer, 0);
   WAVEFORMATEX format = {
-      .wFormatTag = WAVE_FORMAT_PCM,
-      .nChannels = 2,
-      .nSamplesPerSec = 44100,
-      .wBitsPerSample = 16,
-      .nBlockAlign = 2 * 16 / 8,
-      .nAvgBytesPerSec = 44100 * 2 * 16 / 8,
-      .cbSize = 0,
+    .wFormatTag = WAVE_FORMAT_PCM,
+    .nChannels = 2,
+    .nSamplesPerSec = 44100,
+    .wBitsPerSample = 16,
+    .nBlockAlign = 2 * 16 / 8,
+    .nAvgBytesPerSec = 44100 * 2 * 16 / 8,
+    .cbSize = 0,
   };
   primaryBuffer->lpVtbl->SetFormat(primaryBuffer, &format);
 
   // Create Secondary Audio Buffer
   DSBUFFERDESC bufferDesc2 = {
-      .dwSize = sizeof(DSBUFFERDESC),
-      .dwBufferBytes = 1024,
-      .lpwfxFormat = &format,
+    .dwSize = sizeof(DSBUFFERDESC),
+    .dwBufferBytes = 1024,
+    .lpwfxFormat = &format,
   };
   LPDIRECTSOUNDBUFFER secondary_buffer;
   dsound->lpVtbl->CreateSoundBuffer(dsound, &bufferDesc2, &secondary_buffer, 0);
 
   // Create Direct3D Device and Swap-Chain
   DXGI_SWAP_CHAIN_DESC desc = {
-      .BufferCount = 1,
-      .BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-      .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-      .OutputWindow = window,
-      .SampleDesc.Count = 4,
-      .Windowed = TRUE,
+    .BufferCount = 1,
+    .BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+    .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+    .OutputWindow = window,
+    .SampleDesc.Count = 4,
+    .Windowed = TRUE,
   };
   IDXGISwapChain *swapchain = NULL;
   ID3D11Device *dev = NULL;
@@ -137,17 +137,17 @@ int main(int argc, char const *argv[])
 
   // Create G-Buffer
   D3D11_TEXTURE2D_DESC gBufferTexDesc = {
-      .Width = 800,
-      .Height = 600,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
-      .SampleDesc.Count = 1,
-      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .Width = 800,
+    .Height = 600,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+    .SampleDesc.Count = 1,
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
   };
   D3D11_RENDER_TARGET_VIEW_DESC gBufferDesc = {
-      .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
-      .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
   };
   ID3D11Texture2D *gBufferTex = NULL;
   ID3D11RenderTargetView *gBuffer = NULL;
@@ -157,17 +157,17 @@ int main(int argc, char const *argv[])
 
   // Create Z-Buffer
   D3D11_TEXTURE2D_DESC zBufferTexDesc = {
-      .Width = 800,
-      .Height = 600,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-      .SampleDesc.Count = 1,
-      .BindFlags = D3D11_BIND_DEPTH_STENCIL,
+    .Width = 800,
+    .Height = 600,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+    .SampleDesc.Count = 1,
+    .BindFlags = D3D11_BIND_DEPTH_STENCIL,
   };
   const D3D11_DEPTH_STENCIL_VIEW_DESC zBufferDesc = {
-      .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
-      .ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D,
+    .Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+    .ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D,
   };
   ID3D11Texture2D *zBufferTex = NULL;
   ID3D11DepthStencilView *zBuffer = NULL;
@@ -193,7 +193,7 @@ int main(int argc, char const *argv[])
   state->deltaX = state->deltaY = state->clickX = state->clickY = 0.0f;
   mouseX = mouseY = 0.0f;
 
-  MSG msg = {0};
+  MSG msg = { 0 };
   while (msg.message != WM_QUIT)
   {
     while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE))
@@ -203,7 +203,7 @@ int main(int argc, char const *argv[])
     }
 
     // Get joystick input
-    XINPUT_STATE xState = {0};
+    XINPUT_STATE xState = { 0 };
     if (XInputGetState(0, &xState) == ERROR_SUCCESS)
     {
       state->deltaX += xState.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT;
@@ -231,8 +231,8 @@ int main(int argc, char const *argv[])
     // Set Viewport and Blank Colors
     RECT rect;
     GetWindowRect(window, &rect);
-    D3D11_VIEWPORT viewport = {0, 0, rect.right, rect.bottom, 1, 1000};
-    float blankColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
+    D3D11_VIEWPORT viewport = { 0, 0, rect.right, rect.bottom, 1, 1000 };
+    float blankColor[4] = { 0.0f, 0.2f, 0.4f, 1.0f };
 
     // Geometry Pass
     context->lpVtbl->OMSetRenderTargets(context, 1, &gBuffer, zBuffer);
