@@ -27,9 +27,11 @@ NSString *quadShader =
      "using namespace metal;"
      "vertex float4 v_main("
      "    const device packed_float3* vertex_array [[ buffer(0) ]],"
+     "    constant float4x4 &P [[buffer(1)]],"
+     "    constant float4x4 &M [[buffer(2)]],"
      "    unsigned int vid [[ vertex_id ]])"
      "{"
-     "    return float4(vertex_array[vid], 1.0);"
+     "    return P * M * float4(vertex_array[vid], 1.0);"
      "}"
      "fragment half4 f_main()"
      "{"
@@ -72,7 +74,7 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) NSMutableArray *keysDown;
-@property(nonatomic, assign) int cursorVisible;
+@property(nonatomic, assign) int cursorVisible, w, h;
 @property(nonatomic, assign) double lag;
 @property(nonatomic, assign) voice *voices;
 @property(nonatomic, assign) gameState *state;
@@ -158,8 +160,13 @@ static OSStatus audioCallback(void *inRefCon,
     _state->timerCurrent = CACurrentMediaTime();
     _state->mouseMode = 2;
     _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+    _state->posZ = 10.0f;
     _lag = 0.0;
     _cursorVisible = 1;
+
+    [self setBuffer:@"tri"
+           vertices:(float[]){ 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 }
+               size:9 * sizeof(float)];
 
     // Initialize loop
     [NSTimer scheduledTimerWithTimeInterval:1.0 / 60.0
@@ -187,8 +194,18 @@ static OSStatus audioCallback(void *inRefCon,
       update(_state);
     }
 
+    // Update Camera
+    _state->camX += _state->deltaX * 0.01f;
+    _state->camY += _state->deltaY * 0.01f;
+
     // Reset Deltas
     _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+
+    // Matrices
+    matrix P = getProjectionMatrix(_w, _h, 65.0f, 1.0f, 1000.f);
+    matrix M = getViewMatrix(*_state);
+    id PBuffer = [_device newBufferWithBytes:&P length:sizeof(P) options:0];
+    id MBuffer = [_device newBufferWithBytes:&M length:sizeof(M) options:0];
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];
@@ -202,6 +219,8 @@ static OSStatus audioCallback(void *inRefCon,
     for (id buffer in _geometry.objectEnumerator)
     {
       [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
+      [encoder1 setVertexBuffer:PBuffer offset:0 atIndex:1];
+      [encoder1 setVertexBuffer:MBuffer offset:0 atIndex:2];
       [encoder1 drawPrimitives:3 vertexStart:0 vertexCount:3];
     }
     [encoder1 endEncoding];
@@ -225,10 +244,12 @@ static OSStatus audioCallback(void *inRefCon,
 {
   CGSize size = [_window.contentView frame].size;
   [_layer setDrawableSize:size];
-  int w = size.width, h = size.height;
+  _w = size.width, _h = size.height;
 
-  _albedoTexture = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:w h:h];
-  _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8 w:w h:h];
+  _albedoTexture = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:_w h:_h];
+  _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8
+                                 w:_w
+                                 h:_h];
 }
 
 - (void)setBuffer:(NSString *)name vertices:(float *)vertices size:(int)size
