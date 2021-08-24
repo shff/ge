@@ -1,4 +1,4 @@
-#import <math.h>
+#include <math.h>
 
 typedef struct
 {
