@@ -241,23 +241,29 @@ static OSStatus audioCallback(void *inRefCon,
   }
 }
 
-- (void)createBuffers
-{
-  CGSize size = [_window.contentView frame].size;
-  [_layer setDrawableSize:size];
-  _w = size.width, _h = size.height;
-
-  _albedoTexture = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:_w h:_h];
-  _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8
-                                 w:_w
-                                 h:_h];
-}
-
 - (void)setBuffer:(NSString *)name vertices:(float *)vertices size:(int)size
 {
   _geometry[name] = [_device newBufferWithBytes:vertices
                                          length:size
                                         options:MTLResourceStorageModeShared];
+}
+
+- (void)createBuffers
+{
+  CGSize size = [_window.contentView frame].size;
+  [_layer setDrawableSize:size];
+
+  MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
+  desc.storageMode = MTLStorageModePrivate;
+  desc.usage = MTLTextureUsageRenderTarget;
+  desc.width = _w = size.width;
+  desc.height = _h = size.height;
+
+  desc.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
+  _albedoTexture = [_device newTextureWithDescriptor:desc];
+
+  desc.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+  _depthTexture = [_device newTextureWithDescriptor:desc];
 }
 
 - (id<MTLRenderPipelineState>)createShader:(NSString *)shader
@@ -284,17 +290,6 @@ static OSStatus audioCallback(void *inRefCon,
   pass.depthAttachment.loadAction = action;
   pass.depthAttachment.storeAction = MTLStoreActionStore;
   return pass;
-}
-
-- (id<MTLTexture>)newTexture:(MTLPixelFormat)format w:(int)w h:(int)h
-{
-  MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
-  desc.storageMode = MTLStorageModePrivate;
-  desc.usage = MTLTextureUsageRenderTarget;
-  desc.width = w;
-  desc.height = h;
-  desc.pixelFormat = format;
-  return [_device newTextureWithDescriptor:desc];
 }
 
 - (void)windowDidResize:(NSNotification *)notification

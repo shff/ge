@@ -237,10 +237,18 @@ static OSStatus audioCallback(void *inRefCon,
 {
   CGRect bounds = [_window frame];
   _layer.frame = bounds;
-  int w = bounds.size.width, h = bounds.size.height;
 
-  _albedoTexture = [self newTexture:MTLPixelFormatRGBA8Unorm_sRGB w:w h:h];
-  _depthTexture = [self newTexture:MTLPixelFormatDepth32Float_Stencil8 w:w h:h];
+  MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
+  desc.storageMode = MTLStorageModePrivate;
+  desc.usage = MTLTextureUsageRenderTarget;
+  desc.width = bounds.size.width;
+  desc.height = bounds.size.height;
+
+  desc.pixelFormat = MTLPixelFormatRGBA8Unorm_sRGB;
+  _albedoTexture = [_device newTextureWithDescriptor:desc];
+
+  desc.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
+  _depthTexture = [_device newTextureWithDescriptor:desc];
 }
 
 - (id<MTLRenderPipelineState>)createShader:(NSString *)shader
@@ -267,17 +275,6 @@ static OSStatus audioCallback(void *inRefCon,
   pass.depthAttachment.loadAction = action;
   pass.depthAttachment.storeAction = MTLStoreActionStore;
   return pass;
-}
-
-- (id<MTLTexture>)newTexture:(MTLPixelFormat)format w:(int)w h:(int)h
-{
-  MTLTextureDescriptor *desc = [[MTLTextureDescriptor alloc] init];
-  desc.storageMode = MTLStorageModePrivate;
-  desc.usage = MTLTextureUsageRenderTarget;
-  desc.width = w;
-  desc.height = h;
-  desc.pixelFormat = format;
-  return [_device newTextureWithDescriptor:desc];
 }
 @end
 
