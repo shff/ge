@@ -5,39 +5,6 @@
 @import AudioToolbox;
 #include "common.h"
 
-NSString *postShader =
-    @"#include <metal_stdlib>\n"
-     "using namespace metal;"
-     "vertex float4 v_main(uint idx [[vertex_id]])"
-     "{"
-     "    float2 pos[] = { {-1, -1}, {-1, 1}, {1, -1}, {1, 1} };"
-     "    return float4(pos[idx].xy, 0, 1);"
-     "}"
-     "fragment half4 f_main("
-     "    float4 in [[ position ]],"
-     "    texture2d<half> albedo [[ texture(0) ]]"
-     ")"
-     "{"
-     "    constexpr sampler Sampler(coord::pixel, filter::nearest);"
-     "    return half4(albedo.sample(Sampler, in.xy).xyz, 1);"
-     "}";
-
-NSString *quadShader =
-    @"#include <metal_stdlib>\n"
-     "using namespace metal;"
-     "vertex float4 v_main("
-     "    const device packed_float3* vertex_array [[ buffer(0) ]],"
-     "    constant float4x4 &P [[buffer(1)]],"
-     "    constant float4x4 &M [[buffer(2)]],"
-     "    unsigned int vid [[ vertex_id ]])"
-     "{"
-     "    return P * M * float4(vertex_array[vid], 1.0);"
-     "}"
-     "fragment half4 f_main()"
-     "{"
-     "    return half4(0, 0, 0, 1);"
-     "}";
-
 static OSStatus audioCallback(void *inRefCon,
                               AudioUnitRenderActionFlags *ioActionFlags,
                               const AudioTimeStamp *inTimeStamp,
@@ -150,9 +117,9 @@ static OSStatus audioCallback(void *inRefCon,
     // Create Passes, Shaders and Buffers
     _keysDown = [[NSMutableArray alloc] init];
     _geometry = [[NSMutableDictionary alloc] init];
-    _postShader = [self createShader:postShader];
+    _postShader = [self createShader:[self loadResource:@"post.metal"]];
     _postPass = [self createPass:1 with:MTLLoadActionLoad];
-    _quadShader = [self createShader:quadShader];
+    _quadShader = [self createShader:[self loadResource:@"quad.metal"]];
     _quadPass = [self createPass:1 with:MTLLoadActionClear];
     [self createBuffers];
 
@@ -266,9 +233,10 @@ static OSStatus audioCallback(void *inRefCon,
   _depthTexture = [_device newTextureWithDescriptor:desc];
 }
 
-- (id<MTLRenderPipelineState>)createShader:(NSString *)shader
+- (id<MTLRenderPipelineState>)createShader:(NSData *)data
 {
-  id library = [_device newLibraryWithSource:shader options:nil error:NULL];
+  id source = [[NSString alloc] initWithData:data encoding:4];
+  id library = [_device newLibraryWithSource:source options:nil error:NULL];
   MTLRenderPipelineDescriptor *desc = [MTLRenderPipelineDescriptor new];
   desc.vertexFunction = [library newFunctionWithName:@"v_main"];
   desc.fragmentFunction = [library newFunctionWithName:@"f_main"];
@@ -290,6 +258,12 @@ static OSStatus audioCallback(void *inRefCon,
   pass.depthAttachment.loadAction = action;
   pass.depthAttachment.storeAction = MTLStoreActionStore;
   return pass;
+}
+
+- (NSData *)loadResource:(NSString *)name
+{
+  NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:nil];
+  return [NSData dataWithContentsOfFile:path];
 }
 
 - (void)windowDidResize:(NSNotification *)notification
