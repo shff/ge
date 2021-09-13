@@ -117,9 +117,9 @@ static OSStatus audioCallback(void *inRefCon,
     // Create Passes, Shaders and Buffers
     _keysDown = [[NSMutableArray alloc] init];
     _geometry = [[NSMutableDictionary alloc] init];
-    _postShader = [self createShader:[self loadResource:@"post" type:@"metal"]]];
+    _postShader = [self createShader:[self loadResource:@"post" type:@"metal"]];
     _postPass = [self createPass:1 with:MTLLoadActionLoad];
-    _quadShader = [self createShader:[self loadResource:@"quad" type:@"metal"]]];
+    _quadShader = [self createShader:[self loadResource:@"quad" type:@"metal"]];
     _quadPass = [self createPass:1 with:MTLLoadActionClear];
     [self createBuffers];
 

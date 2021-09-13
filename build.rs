@@ -14,6 +14,8 @@ fn main() {
             .file("src/native/macos.m")
             .compile("native.a");
     } else if target.contains("x86_64-apple-ios") || target.contains("aarch64-apple-ios-sim") {
+        copy_asset("post.metal");
+        copy_asset("quad.metal");
         cc::Build::new()
             .flag("-fmodules")
             .flag("-O3")
@@ -25,6 +27,8 @@ fn main() {
             .file("src/native/ios.m")
             .compile("native.a");
     } else if target.contains("aarch64-apple-ios") {
+        copy_asset("post.metal");
+        copy_asset("quad.metal");
         cc::Build::new()
             .flag("-fmodules")
             .flag("-O3")
@@ -70,17 +74,13 @@ fn main() {
 
 fn copy_asset(asset: &str) {
     println!("cargo:rerun-if-changed=src/assets/{}", asset);
-
-    let manifest_dir_string = std::env::var("CARGO_MANIFEST_DIR").unwrap();
-    let build_type = std::env::var("PROFILE").unwrap();
-    let path = std::path::Path::new(&manifest_dir_string)
-        .join("target")
-        .join(build_type);
-    let output_dir = std::path::PathBuf::from(path);
-
     let input_path = std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap())
         .join("src/assets")
         .join(asset);
-    let output_path = std::path::Path::new(&output_dir).join(asset);
+    let output_path = std::path::Path::new(&std::env::var("OUT_DIR").unwrap())
+        .ancestors()
+        .nth(3)
+        .unwrap()
+        .join(asset);
     std::fs::copy(input_path, output_path).unwrap();
 }
