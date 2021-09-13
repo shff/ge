@@ -117,9 +117,9 @@ static OSStatus audioCallback(void *inRefCon,
     // Create Passes, Shaders and Buffers
     _keysDown = [[NSMutableArray alloc] init];
     _geometry = [[NSMutableDictionary alloc] init];
-    _postShader = [self createShader:[self loadResource:@"post.metal"]];
+    _postShader = [self createShader:[self loadResource:@"post" type:@"metal"]]];
     _postPass = [self createPass:1 with:MTLLoadActionLoad];
-    _quadShader = [self createShader:[self loadResource:@"quad.metal"]];
+    _quadShader = [self createShader:[self loadResource:@"quad" type:@"metal"]]];
     _quadPass = [self createPass:1 with:MTLLoadActionClear];
     [self createBuffers];
 
@@ -260,9 +260,9 @@ static OSStatus audioCallback(void *inRefCon,
   return pass;
 }
 
-- (NSData *)loadResource:(NSString *)name
+- (NSData *)loadResource:(NSString *)name type:(NSString *)type
 {
-  NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:nil];
+  NSString *path = [[NSBundle mainBundle] pathForResource:name ofType:type];
   return [NSData dataWithContentsOfFile:path];
 }
 
