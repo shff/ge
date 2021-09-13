@@ -13,7 +13,7 @@ fn main() {
             .flag("-mmacosx-version-min=10.10")
             .file("src/native/macos.m")
             .compile("native.a");
-    } else if target.contains("x86_64-apple-ios") {
+    } else if target.contains("x86_64-apple-ios") || target.contains("aarch64-apple-ios-sim") {
         cc::Build::new()
             .flag("-fmodules")
             .flag("-O3")
