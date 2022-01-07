@@ -1,18 +1,21 @@
 fn main() {
     let target = std::env::var("TARGET").unwrap();
     if target.contains("darwin") {
-        copy_asset("post.metal");
-        copy_asset("quad.metal");
+        copy_asset("shaders.metal");
         cc::Build::new()
+            .cpp(true)
             .flag("-fmodules")
+            .flag("-fcxx-modules")
+            .flag("--std=c++17")
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
             .flag("-pedantic")
             .flag("-Wno-unused-parameter")
             .flag("-mmacosx-version-min=10.10")
-            .file("src/native/macos.m")
+            .file("src/native/macos.mm")
             .compile("native.a");
+        println!("cargo:rerun-if-changed=src/native/macos.mm");
     } else if target.contains("x86_64-apple-ios") || target.contains("aarch64-apple-ios-sim") {
         copy_asset("post.metal");
         copy_asset("quad.metal");
