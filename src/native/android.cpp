@@ -2,8 +2,50 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <SLES/OpenSLES_Android.h>
-#include <android_native_app_glue.h>
 #include <stdint.h>
+
+#include <pthread.h>
+#include <sched.h>
+#include <android/configuration.h>
+#include <android/native_activity.h>
+
+// Android Native App Glue
+struct android_app;
+struct android_poll_source {
+  int32_t id;
+  struct android_app* app;
+  void (*process)(struct android_app* app, struct android_poll_source* source);
+};
+struct android_app {
+  void* userData;
+  void (*onAppCmd)(struct android_app* app, int32_t cmd);
+  int32_t (*onInputEvent)(struct android_app* app, AInputEvent* event);
+  ANativeActivity* activity;
+  AConfiguration* config;
+  void* savedState;
+  size_t savedStateSize;
+  ALooper* looper;
+  AInputQueue* inputQueue;
+  ANativeWindow* window;
+  ARect contentRect;
+  int activityState;
+  int destroyRequested;
+
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+  int msgread;
+  int msgwrite;
+  pthread_t thread;
+  struct android_poll_source cmdPollSource;
+  struct android_poll_source inputPollSource;
+  int running;
+  int stateSaved;
+  int destroyed;
+  int redrawNeeded;
+  AInputQueue* pendingInputQueue;
+  ANativeWindow* pendingWindow;
+  ARect pendingContentRect;
+};
 
 EGLDisplay display;
 EGLSurface surface;
@@ -11,12 +53,12 @@ SLEngineItf audioInterface;
 SLObjectItf audioOutput;
 unsigned int gbuffer;
 int32_t prevId;
-float prevX, prevY;
-gameState *state;
+float prevX, prevY, deltaX, deltaY, clickX, clickY;
+uint64_t timerCurrent;
 
 static void engine_handle_cmd(struct android_app *app, int32_t cmd)
 {
-  if (cmd == APP_CMD_INIT_WINDOW)
+  if (cmd == 1 /* APP_CMD_INIT_WINDOW */)
   {
     // Initialize Display
     display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -98,10 +140,10 @@ static int32_t engine_handle_input(struct android_app *app, AInputEvent *e)
   if (AInputEvent_getType(e) != AINPUT_EVENT_TYPE_MOTION) return 0;
 
   int32_t action = AMotionEvent_getAction(e) & AMOTION_EVENT_ACTION_MASK;
-  float deltaX = AMotionEvent_getX(e, 0) - prevX;
-  float deltaY = AMotionEvent_getY(e, 0) - prevY;
+  float deltaXa = AMotionEvent_getX(e, 0) - prevX;
+  float deltaYa = AMotionEvent_getY(e, 0) - prevY;
   int32_t isOne = AMotionEvent_getPointerCount(e) == 1;
-  int32_t isMove = deltaX * deltaX + deltaY * deltaY > 8 * 8;
+  int32_t isMove = deltaXa * deltaXa + deltaYa * deltaYa > 8 * 8;
   int32_t isSame = prevId == AMotionEvent_getPointerId(e, 0);
   int64_t isTap =
       AMotionEvent_getEventTime(e) - AMotionEvent_getDownTime(e) <= 1.8E8;
@@ -109,13 +151,13 @@ static int32_t engine_handle_input(struct android_app *app, AInputEvent *e)
   if (action == AMOTION_EVENT_ACTION_MOVE && !isTap && isSame && isMove &&
       isOne)
   {
-    state->deltaX += deltaX;
-    state->deltaY += deltaY;
+    deltaX += deltaXa;
+    deltaY += deltaYa;
   }
   if (action == AMOTION_EVENT_ACTION_UP && isTap && isSame && !isMove && isOne)
   {
-    state->clickX = deltaX;
-    state->clickY = deltaY;
+    clickX = deltaXa;
+    clickY = deltaYa;
   }
   if (action == AMOTION_EVENT_ACTION_DOWN)
   {
@@ -134,11 +176,11 @@ void android_main(struct android_app *app)
   // Start the Timer
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
-  state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
+  timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
   uint64_t lag = 0.0;
 
   // Reset Deltas
-  state->clickX = state->clickY = state->deltaX = state->deltaY = 0.0f;
+  clickX = clickY = deltaX = deltaY = 0.0f;
 
   int events = 0;
   struct android_poll_source *source;
@@ -152,17 +194,16 @@ void android_main(struct android_app *app)
     // Update Timer
     clock_gettime(CLOCK_MONOTONIC, &time);
     uint64_t timerNext = (time.tv_sec * 10E8 + time.tv_nsec);
-    uint64_t timerDelta = timerNext - state->timerCurrent;
-    state->timerCurrent = timerNext;
+    uint64_t timerDelta = timerNext - timerCurrent;
+    timerCurrent = timerNext;
 
     // Fixed updates
     for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
-      update(state);
     }
 
     // Reset Deltas
-    state->clickX = state->clickY = state->deltaX = state->deltaY = 0.0f;
+    clickX = clickY = deltaX = deltaY = 0.0f;
 
     // Renderer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);

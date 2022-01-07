@@ -61,6 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CFLAGS: -I/usr/local/lib/android/sdk/ndk/22.1.7171670/sources/android/native_app_glue
+      CPPFLAGS: -I/usr/local/lib/android/sdk/ndk/22.1.7171670/sources/android/native_app_glue
       CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER: aarch64-linux-android30-clang
       CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER: armv7a-linux-androideabi30-clang
       CARGO_TARGET_I686_LINUX_ANDROID_LINKER: i686-linux-android30-clang

@@ -59,11 +59,14 @@ fn main() {
         println!("cargo:rustc-link-lib=xinput");
     } else if target.contains("android") {
         cc::Build::new()
+            .cpp(true)
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
-            .file("src/native/android.c")
+            .flag("-Wno-unused-parameter")
+            .file("src/native/android.cpp")
             .compile("native.a");
+        println!("cargo:rerun-if-changed=src/native/android.cpp");
     } else if target.contains("linux") {
         cc::Build::new()
             .cpp(true)
