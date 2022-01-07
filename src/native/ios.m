@@ -98,9 +98,9 @@ static OSStatus audioCallback(void *inRefCon,
 
   // Create Passes, Shaders and Buffers
   _geometry = [[NSMutableDictionary alloc] init];
-  _postShader = [self createShader:[self loadResource:@"post" type:@"metal"]];
+  _postShader = [self createShader:@"post"];
   _postPass = [self createPass:1 with:MTLLoadActionLoad];
-  _quadShader = [self createShader:[self loadResource:@"quad" type:@"metal"]];
+  _quadShader = [self createShader:@"quad"];
   _quadPass = [self createPass:1 with:MTLLoadActionClear];
   [self createBuffers];
 
@@ -220,10 +220,14 @@ static OSStatus audioCallback(void *inRefCon,
   _depthTexture = [_device newTextureWithDescriptor:desc];
 }
 
-- (id<MTLRenderPipelineState>)createShader:(NSData *)data
+- (id<MTLRenderPipelineState>)createShader:(NSString *)name
 {
-  id source = [[NSString alloc] initWithData:data encoding:4];
-  id library = [_device newLibraryWithSource:source options:nil error:NULL];
+  NSString *shaderPath = [[NSBundle mainBundle] pathForResource:@"shaders"
+                                                         ofType:@"metal"];
+  NSData *shaderData = [NSData dataWithContentsOfFile:shaderPath];
+  id source = [[NSString alloc] initWithData:shaderData encoding:4];
+  id library = [device newLibraryWithSource:source options:nil error:NULL];
+
   MTLRenderPipelineDescriptor *desc = [MTLRenderPipelineDescriptor new];
   desc.vertexFunction = [library newFunctionWithName:@"v_main"];
   desc.fragmentFunction = [library newFunctionWithName:@"f_main"];

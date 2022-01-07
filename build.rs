@@ -17,8 +17,7 @@ fn main() {
             .compile("native.a");
         println!("cargo:rerun-if-changed=src/native/macos.mm");
     } else if target.contains("x86_64-apple-ios") || target.contains("aarch64-apple-ios-sim") {
-        copy_asset("post.metal");
-        copy_asset("quad.metal");
+        copy_asset("shaders.metal");
         cc::Build::new()
             .flag("-fmodules")
             .flag("-O3")
@@ -29,9 +28,9 @@ fn main() {
             .flag("-mios-simulator-version-min=13.0")
             .file("src/native/ios.m")
             .compile("native.a");
+        println!("cargo:rerun-if-changed=src/native/ios.mm");
     } else if target.contains("aarch64-apple-ios") {
-        copy_asset("post.metal");
-        copy_asset("quad.metal");
+        copy_asset("shaders.metal");
         cc::Build::new()
             .flag("-fmodules")
             .flag("-O3")
@@ -41,6 +40,7 @@ fn main() {
             .flag("-Wno-unused-parameter")
             .file("src/native/ios.m")
             .compile("native.a");
+        println!("cargo:rerun-if-changed=src/native/ios.mm");
     } else if target.contains("windows") {
         cc::Build::new()
             .flag("-Wall")
