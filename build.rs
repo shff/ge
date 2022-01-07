@@ -66,18 +66,21 @@ fn main() {
             .compile("native.a");
     } else if target.contains("linux") {
         cc::Build::new()
+            .cpp(true)
+            .flag("--std=c++17")
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
             .flag("-Wl,-s")
             .flag("-Wno-unused-parameter")
             .flag("-Wno-unused-but-set-variable")
-            .file("src/native/x11.c")
+            .file("src/native/x11.cpp")
             .compile("native.a");
         println!("cargo:rustc-link-lib=X11");
         println!("cargo:rustc-link-lib=EGL");
         println!("cargo:rustc-link-lib=GL");
         println!("cargo:rustc-link-lib=asound");
+        println!("cargo:rerun-if-changed=src/native/x11.cpp");
     }
 }
 

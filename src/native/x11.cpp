@@ -6,7 +6,6 @@
 void (*glGenFramebuffers)(GLsizei n, GLuint *framebuffers);
 void (*glDeleteFramebuffers)(GLsizei n, GLuint *framebuffers);
 void (*glBindFramebuffer)(GLenum target, GLuint framebuffer);
-void (*glBindFramebuffer)(GLenum target, GLuint framebuffer);
 void (*glFramebufferTexture)(GLenum target, GLenum attachment, GLuint texture,
                              GLint level);
 void (*glDrawBuffers)(GLsizei n, const GLenum *bufs);
@@ -82,18 +81,16 @@ int main()
   snd_pcm_sw_params(pcm_handle, sw_params);
 
   // Initialize OpenGL Extensions
-  glGenFramebuffers = (void (*)())glXGetProcAddressARB(
+  glGenFramebuffers = (void (*)(GLsizei, GLuint*))glXGetProcAddressARB(
       (const unsigned char *)"glGenFramebuffers");
-  glDeleteFramebuffers = (void (*)())glXGetProcAddressARB(
+  glDeleteFramebuffers = (void (*)(GLsizei, GLuint*))glXGetProcAddressARB(
       (const unsigned char *)"glDeleteFramebuffers");
-  glBindFramebuffer = (void (*)())glXGetProcAddressARB(
+  glBindFramebuffer = (void (*)(GLenum, GLuint))glXGetProcAddressARB(
       (const unsigned char *)"glBindFramebuffer");
-  glBindFramebuffer = (void (*)())glXGetProcAddressARB(
-      (const unsigned char *)"glBindFramebuffer");
-  glFramebufferTexture = (void (*)())glXGetProcAddressARB(
+  glFramebufferTexture = (void (*)(GLenum, GLenum, GLuint, GLint))glXGetProcAddressARB(
       (const unsigned char *)"glFramebufferTexture");
   glDrawBuffers =
-      (void (*)())glXGetProcAddressARB((const unsigned char *)"glDrawBuffers");
+      (void (*)(GLsizei, const GLenum*))glXGetProcAddressARB((const unsigned char *)"glDrawBuffers");
 
   // Initialize OpenGL
   int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -115,17 +112,16 @@ int main()
   glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, backbuffer, 0);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthbuffer, 0);
-  glDrawBuffers(2, (GLenum[]){ GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT });
+  GLenum bufferList[] = { GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT };
+  glDrawBuffers(2, bufferList);
 
-  gameState *state = malloc(sizeof(gameState));
-  int mouseX = 0;
-  int mouseY = 0;
-  state->clickX = 0, state->clickY = 0, state->deltaX = 0, state->deltaY = 0;
+  unsigned int mouseX = 0, mouseY = 0, mouseMode = 0;
+  float clickX = 0.0f, clickY = 0.0f, deltaX = 0.0f, deltaY = 0.0f;
 
   // Start the Timer
   struct timespec time;
   clock_gettime(CLOCK_MONOTONIC, &time);
-  state->timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
+  uint64_t timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
   uint64_t lag = 0.0;
   uint64_t xscreenLag = 0.0;
 
@@ -138,14 +134,14 @@ int main()
       break;
 
     // Mouse Cursor
-    if (e.type == MotionNotify && e.xbutton.button == state->mouseMode - 1)
+    if (e.type == MotionNotify && e.xbutton.button == mouseMode - 1)
     {
       XGrabPointer(display, window, True,
                    ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                    GrabModeAsync, GrabModeAsync, window, None, CurrentTime);
       XDefineCursor(display, window, None);
-      mouseX += (state->deltaX = e.xmotion.x - mouseX);
-      mouseX += (state->deltaY = e.xmotion.y - mouseY);
+      mouseX += (deltaX = e.xmotion.x - mouseX);
+      mouseX += (deltaY = e.xmotion.y - mouseY);
     }
     else if (e.type == ButtonPress && e.xbutton.button == 1)
     {
@@ -153,24 +149,18 @@ int main()
       mouseY = e.xmotion.y;
     }
     else if (e.type == ButtonRelease && e.xbutton.button == 1 &&
-             state->deltaY + state->deltaY == 0.0f)
+             deltaY + deltaY == 0.0f)
     {
-      if (state->mouseMode != 1) XUngrabPointer(display, CurrentTime);
-      state->clickX = e.xmotion.x;
-      state->clickY = e.xmotion.y;
+      if (mouseMode != 1) XUngrabPointer(display, CurrentTime);
+      clickX = e.xmotion.x;
+      clickY = e.xmotion.y;
     }
     else if (e.type == KeyPress && e.xkey.keycode == 13 &&
              e.xkey.state & Mod1Mask)
     {
       fullscreen = !fullscreen;
-      XSendEvent(display, root, False,
-                 SubstructureNotifyMask | SubstructureRedirectMask,
-                 &(XEvent){ .xclient.window = window,
-                            .xclient.format = 32,
-                            .xclient.message_type = stateAtom,
-                            .xclient.data.l[0] = fullscreen,
-                            .xclient.data.l[1] = fullscreenAtom,
-                            .xclient.data.l[3] = 1 });
+      XChangeProperty(display, window, stateAtom, 4, 32,
+          PropModeReplace, (unsigned char *)&fullscreenAtom, fullscreen);
     }
 
     // Toggle Fullscreen
@@ -192,8 +182,8 @@ int main()
     // Update Timer
     clock_gettime(CLOCK_MONOTONIC, &time);
     uint64_t timerNext = (time.tv_sec * 10E8 + time.tv_nsec);
-    uint64_t timerDelta = timerNext - state->timerCurrent;
-    state->timerCurrent = timerNext;
+    uint64_t timerDelta = timerNext - timerCurrent;
+    timerCurrent = timerNext;
 
     // Periodically reset the screensaver
     xscreenLag += timerDelta;
@@ -206,11 +196,10 @@ int main()
     // Fixed updates
     for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
-      update(state);
     }
 
     // Reset mouse vars
-    state->clickX = 0, state->clickY = 0, state->deltaX = 0, state->deltaY = 0;
+    clickX = 0, clickY = 0, deltaX = 0, deltaY = 0;
 
     // Render to G-Buffer
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);

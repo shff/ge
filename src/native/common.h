@@ -13,11 +13,10 @@ typedef struct
 
 matrix getProjectionMatrix(int w, int h, float fov, float near, float far)
 {
-  return { .m = { [0] = 1.0f / (tanf(fov * 3.14f / 180.0f / 2.0f) * w / h),
-                  [5] = 1.0f / tanf(fov * 3.14f / 180.0f / 2.0f),
-                  [10] = -(far + near) / (far - near),
-                  [11] = -1.0f,
-                  [14] = -(2.0f * far * near) / (far - near) } };
+  return { .m = { 1.0f / (tanf(fov * 3.14f / 180.0f / 2.0f) * w / h), 0.0f, 0.0f, 0.0f, 0.0f,
+                  1.0f / tanf(fov * 3.14f / 180.0f / 2.0f), 0.0f, 0.0f, 0.0f, 0.0f, 
+                  -(far + near) / (far - near), -1.0f, 0.0f, 0.0f, 
+                  [14] = -(2.0f * far * near) / (far - near), 0.0f } };
 }
 
 matrix getViewMatrix(float camX, float camY, float posX, float posY, float posZ)
