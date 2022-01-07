@@ -19,26 +19,32 @@ fn main() {
     } else if target.contains("x86_64-apple-ios") || target.contains("aarch64-apple-ios-sim") {
         copy_asset("shaders.metal");
         cc::Build::new()
+            .cpp(true)
             .flag("-fmodules")
+            .flag("-fcxx-modules")
+            .flag("--std=c++17")
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
             .flag("-pedantic")
             .flag("-Wno-unused-parameter")
             .flag("-mios-simulator-version-min=13.0")
-            .file("src/native/ios.m")
+            .file("src/native/ios.mm")
             .compile("native.a");
         println!("cargo:rerun-if-changed=src/native/ios.mm");
     } else if target.contains("aarch64-apple-ios") {
         copy_asset("shaders.metal");
         cc::Build::new()
+            .cpp(true)
             .flag("-fmodules")
+            .flag("-fcxx-modules")
+            .flag("--std=c++17")
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
             .flag("-pedantic")
             .flag("-Wno-unused-parameter")
-            .file("src/native/ios.m")
+            .file("src/native/ios.mm")
             .compile("native.a");
         println!("cargo:rerun-if-changed=src/native/ios.mm");
     } else if target.contains("windows") {

@@ -42,14 +42,16 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) NSMutableDictionary *geometry;
 @property(nonatomic, assign) double lag;
 @property(nonatomic, assign) voice *voices;
-@property(nonatomic, assign) gameState *state;
+@property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
+@property(nonatomic, assign) float posX, posY, posZ, camX, camY;
+@property(nonatomic, assign) int mouseMode;
+@property(nonatomic, assign) double timerCurrent;
 @end
 
 @implementation App
 - (void)applicationDidFinishLaunching:(UIApplication *)application
 {
-  _state = malloc(sizeof(gameState));
-  _voices = malloc(sizeof(voice) * 32);
+  _voices = (voice *)malloc(sizeof(voice) * 32);
   memset(_voices, 0, sizeof(voice) * 32);
 
   // Prevent sleeping
@@ -73,13 +75,13 @@ static OSStatus audioCallback(void *inRefCon,
     .mBytesPerFrame = 2,
     .mBytesPerPacket = 2
   };
+  AURenderCallbackStruct callback = { audioCallback, _voices };
   AudioComponentInstanceNew(AudioComponentFindNext(0, &compDesc), &audioUnit);
   AudioUnitSetProperty(audioUnit, kAudioUnitProperty_StreamFormat,
                        kAudioUnitScope_Input, 0, &audioFormat,
                        sizeof(audioFormat));
   AudioUnitSetProperty(audioUnit, kAudioUnitProperty_SetRenderCallback,
-                       kAudioUnitScope_Input, 0,
-                       &(AURenderCallbackStruct){ audioCallback, _voices },
+                       kAudioUnitScope_Input, 0, &callback,
                        sizeof(AURenderCallbackStruct));
   AudioUnitInitialize(audioUnit);
   AudioOutputUnitStart(audioUnit);
@@ -105,10 +107,10 @@ static OSStatus audioCallback(void *inRefCon,
   [self createBuffers];
 
   // Initialize state
-  _state->timerCurrent = CACurrentMediaTime();
+  _timerCurrent = CACurrentMediaTime();
   _lag = 0.0;
-  _state->mouseMode = 2;
-  _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+  _mouseMode = 2;
+  _clickX = _clickY = _deltaX = _deltaY = 0.0f;
 
   // Add gesture recognizers
   [_window.rootViewController.view
@@ -139,17 +141,16 @@ static OSStatus audioCallback(void *inRefCon,
   {
     // Update Timer
     double timerNext = CACurrentMediaTime();
-    double timerDelta = timerNext - _state->timerCurrent;
-    _state->timerCurrent = timerNext;
+    double timerDelta = timerNext - _timerCurrent;
+    _timerCurrent = timerNext;
 
     // Fixed updates
     for (_lag += timerDelta; _lag >= 1.0 / 60.0; _lag -= 1.0 / 60.0)
     {
-      update(_state);
     }
 
     // Reset Deltas
-    _state->clickX = _state->clickY = _state->deltaX = _state->deltaY = 0.0f;
+    _clickX = _clickY = _deltaX = _deltaY = 0.0f;
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];
@@ -163,7 +164,9 @@ static OSStatus audioCallback(void *inRefCon,
     for (id buffer in _geometry.objectEnumerator)
     {
       [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
-      [encoder1 drawPrimitives:3 vertexStart:0 vertexCount:3];
+      [encoder1 drawPrimitives:MTLPrimitiveTypeTriangle
+                   vertexStart:0
+                   vertexCount:3];
     }
     [encoder1 endEncoding];
 
@@ -173,7 +176,9 @@ static OSStatus audioCallback(void *inRefCon,
     id encoder2 = [buffer renderCommandEncoderWithDescriptor:_postPass];
     [encoder2 setRenderPipelineState:_postShader];
     [encoder2 setFragmentTexture:_albedoTexture atIndex:0];
-    [encoder2 drawPrimitives:4 vertexStart:0 vertexCount:4];
+    [encoder2 drawPrimitives:MTLPrimitiveTypeTriangleStrip
+                 vertexStart:0
+                 vertexCount:4];
     [encoder2 endEncoding];
 
     // Render
@@ -184,21 +189,19 @@ static OSStatus audioCallback(void *inRefCon,
 
 - (void)onTap:(UITapGestureRecognizer *)recognizer
 {
-  if (_state->mouseMode != 1 &&
-      recognizer.state == UIGestureRecognizerStateRecognized)
+  if (_mouseMode != 1 && recognizer.state == UIGestureRecognizerStateRecognized)
   {
-    _state->clickX = [recognizer locationInView:recognizer.view].x;
-    _state->clickY = [recognizer locationInView:recognizer.view].y;
+    _clickX = [recognizer locationInView:recognizer.view].x;
+    _clickY = [recognizer locationInView:recognizer.view].y;
   }
 }
 
 - (void)onDrag:(UIPanGestureRecognizer *)recognizer
 {
-  if (_state->mouseMode != 0 &&
-      recognizer.state == UIGestureRecognizerStateRecognized)
+  if (_mouseMode != 0 && recognizer.state == UIGestureRecognizerStateRecognized)
   {
-    _state->deltaX += [recognizer translationInView:recognizer.view].y;
-    _state->deltaY += [recognizer translationInView:recognizer.view].y;
+    _deltaX += [recognizer translationInView:recognizer.view].y;
+    _deltaY += [recognizer translationInView:recognizer.view].y;
   }
 }
 
@@ -226,7 +229,7 @@ static OSStatus audioCallback(void *inRefCon,
                                                          ofType:@"metal"];
   NSData *shaderData = [NSData dataWithContentsOfFile:shaderPath];
   id source = [[NSString alloc] initWithData:shaderData encoding:4];
-  id library = [device newLibraryWithSource:source options:nil error:NULL];
+  id library = [_device newLibraryWithSource:source options:nil error:NULL];
 
   MTLRenderPipelineDescriptor *desc = [MTLRenderPipelineDescriptor new];
   desc.vertexFunction = [library newFunctionWithName:@"v_main"];
