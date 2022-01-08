@@ -9,6 +9,11 @@ void (*glBindFramebuffer)(GLenum target, GLuint framebuffer);
 void (*glFramebufferTexture)(GLenum target, GLenum attachment, GLuint texture,
                              GLint level);
 void (*glDrawBuffers)(GLsizei n, const GLenum *bufs);
+void (*glBindBuffer)(GLenum target, GLuint buffer);
+void (*glGenBuffers)(GLsizei n, GLuint *buffers);
+void (*glBufferData)(GLenum target, GLsizeiptr size, const void *data,
+                     GLenum usage);
+void (*glUniform1i)(GLsizei n, const GLint val);
 
 int createTexture(unsigned int w, unsigned int h, unsigned int type)
 {
@@ -92,6 +97,15 @@ int main()
           (const unsigned char *)"glFramebufferTexture");
   glDrawBuffers = (void (*)(GLsizei, const GLenum *))glXGetProcAddressARB(
       (const unsigned char *)"glDrawBuffers");
+  glGenBuffers = (void (*)(GLsizei n, GLuint * buffers))
+      glXGetProcAddressARB((const unsigned char *)"glGenBuffers");
+  glBindBuffer = (void (*)(GLenum target, GLuint buffer))glXGetProcAddressARB(
+      (const unsigned char *)"glBindBuffer");
+  glBufferData =
+      (void (*)(GLenum, GLsizeiptr, const void *, GLenum))glXGetProcAddressARB(
+          (const unsigned char *)"glBufferData");
+  glUniform1i = (void (*)(GLsizei, const GLint))glXGetProcAddressARB(
+      (const unsigned char *)"glUniform1i");
 
   // Initialize OpenGL
   int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -107,6 +121,12 @@ int main()
   unsigned int depthbuffer =
       createTexture(attr.width, attr.height, GL_DEPTH_COMPONENT);
 
+  // Post-processing vertex buffer
+  unsigned int postBuffer;
+  glGenBuffers(1, &postBuffer);
+  glBindBuffer(GL_ARRAY_BUFFER, postBuffer);
+  glBufferData(GL_ARRAY_BUFFER, (long)0, NULL, GL_STATIC_DRAW);
+
   // Create Framebuffer
   unsigned int gbuffer;
   glGenFramebuffers(1, &gbuffer);
@@ -118,6 +138,7 @@ int main()
 
   unsigned int mouseX = 0, mouseY = 0, mouseMode = 0;
   float clickX = 0.0f, clickY = 0.0f, deltaX = 0.0f, deltaY = 0.0f;
+  float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
 
   // Start the Timer
   struct timespec time;
@@ -199,14 +220,37 @@ int main()
     {
     }
 
+    // Update Camera - TODO: Move to Gamecode
+    camX += deltaX * 0.01f;
+    camY += deltaY * 0.01f;
+
     // Reset mouse vars
     clickX = 0, clickY = 0, deltaX = 0, deltaY = 0;
 
-    // Render to G-Buffer
+    // Get size
+    XGetWindowAttributes(display, window, &attr);
+    matrix P =
+        getProjectionMatrix(attr.width, attr.height, 65.0f, 1.0f, 1000.f);
+    matrix M = getViewMatrix(camX, camY, posX, posY, posZ);
+
+    // Draw Geometry
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Draw Framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, backbuffer);
+    glUniform1i(GL_TEXTURE0, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthbuffer);
+    glUniform1i(GL_TEXTURE1, 1);
+    glBindBuffer(GL_ARRAY_BUFFER, postBuffer);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, postBuffer);
+    glEnable(GL_DEPTH_TEST);
+
     glXSwapBuffers(display, window);
   }
 
