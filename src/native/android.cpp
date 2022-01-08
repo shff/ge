@@ -4,29 +4,31 @@
 #include <SLES/OpenSLES_Android.h>
 #include <stdint.h>
 
-#include <pthread.h>
-#include <sched.h>
 #include <android/configuration.h>
 #include <android/native_activity.h>
+#include <pthread.h>
+#include <sched.h>
 
 // Android Native App Glue
 struct android_app;
-struct android_poll_source {
+struct android_poll_source
+{
   int32_t id;
-  struct android_app* app;
-  void (*process)(struct android_app* app, struct android_poll_source* source);
+  struct android_app *app;
+  void (*process)(struct android_app *app, struct android_poll_source *source);
 };
-struct android_app {
-  void* userData;
-  void (*onAppCmd)(struct android_app* app, int32_t cmd);
-  int32_t (*onInputEvent)(struct android_app* app, AInputEvent* event);
-  ANativeActivity* activity;
-  AConfiguration* config;
-  void* savedState;
+struct android_app
+{
+  void *userData;
+  void (*onAppCmd)(struct android_app *app, int32_t cmd);
+  int32_t (*onInputEvent)(struct android_app *app, AInputEvent *event);
+  ANativeActivity *activity;
+  AConfiguration *config;
+  void *savedState;
   size_t savedStateSize;
-  ALooper* looper;
-  AInputQueue* inputQueue;
-  ANativeWindow* window;
+  ALooper *looper;
+  AInputQueue *inputQueue;
+  ANativeWindow *window;
   ARect contentRect;
   int activityState;
   int destroyRequested;
@@ -42,8 +44,8 @@ struct android_app {
   int stateSaved;
   int destroyed;
   int redrawNeeded;
-  AInputQueue* pendingInputQueue;
-  ANativeWindow* pendingWindow;
+  AInputQueue *pendingInputQueue;
+  ANativeWindow *pendingWindow;
   ARect pendingContentRect;
 };
 

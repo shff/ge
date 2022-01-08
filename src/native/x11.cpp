@@ -81,16 +81,17 @@ int main()
   snd_pcm_sw_params(pcm_handle, sw_params);
 
   // Initialize OpenGL Extensions
-  glGenFramebuffers = (void (*)(GLsizei, GLuint*))glXGetProcAddressARB(
+  glGenFramebuffers = (void (*)(GLsizei, GLuint *))glXGetProcAddressARB(
       (const unsigned char *)"glGenFramebuffers");
-  glDeleteFramebuffers = (void (*)(GLsizei, GLuint*))glXGetProcAddressARB(
+  glDeleteFramebuffers = (void (*)(GLsizei, GLuint *))glXGetProcAddressARB(
       (const unsigned char *)"glDeleteFramebuffers");
   glBindFramebuffer = (void (*)(GLenum, GLuint))glXGetProcAddressARB(
       (const unsigned char *)"glBindFramebuffer");
-  glFramebufferTexture = (void (*)(GLenum, GLenum, GLuint, GLint))glXGetProcAddressARB(
-      (const unsigned char *)"glFramebufferTexture");
-  glDrawBuffers =
-      (void (*)(GLsizei, const GLenum*))glXGetProcAddressARB((const unsigned char *)"glDrawBuffers");
+  glFramebufferTexture =
+      (void (*)(GLenum, GLenum, GLuint, GLint))glXGetProcAddressARB(
+          (const unsigned char *)"glFramebufferTexture");
+  glDrawBuffers = (void (*)(GLsizei, const GLenum *))glXGetProcAddressARB(
+      (const unsigned char *)"glDrawBuffers");
 
   // Initialize OpenGL
   int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -159,8 +160,8 @@ int main()
              e.xkey.state & Mod1Mask)
     {
       fullscreen = !fullscreen;
-      XChangeProperty(display, window, stateAtom, 4, 32,
-          PropModeReplace, (unsigned char *)&fullscreenAtom, fullscreen);
+      XChangeProperty(display, window, stateAtom, 4, 32, PropModeReplace,
+                      (unsigned char *)&fullscreenAtom, fullscreen);
     }
 
     // Toggle Fullscreen
