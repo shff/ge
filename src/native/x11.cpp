@@ -1,19 +1,8 @@
 #include "common.h"
+#include <GL/glew.h>
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
-
-void (*glGenFramebuffers)(GLsizei n, GLuint *framebuffers);
-void (*glDeleteFramebuffers)(GLsizei n, GLuint *framebuffers);
-void (*glBindFramebuffer)(GLenum target, GLuint framebuffer);
-void (*glFramebufferTexture)(GLenum target, GLenum attachment, GLuint texture,
-                             GLint level);
-void (*glDrawBuffers)(GLsizei n, const GLenum *bufs);
-void (*glBindBuffer)(GLenum target, GLuint buffer);
-void (*glGenBuffers)(GLsizei n, GLuint *buffers);
-void (*glBufferData)(GLenum target, GLsizeiptr size, const void *data,
-                     GLenum usage);
-void (*glUniform1i)(GLsizei n, const GLint val);
 
 int createTexture(unsigned int w, unsigned int h, unsigned int type)
 {
@@ -86,26 +75,7 @@ int main()
   snd_pcm_sw_params(pcm_handle, sw_params);
 
   // Initialize OpenGL Extensions
-  glGenFramebuffers = (void (*)(GLsizei, GLuint *))glXGetProcAddressARB(
-      (const unsigned char *)"glGenFramebuffers");
-  glDeleteFramebuffers = (void (*)(GLsizei, GLuint *))glXGetProcAddressARB(
-      (const unsigned char *)"glDeleteFramebuffers");
-  glBindFramebuffer = (void (*)(GLenum, GLuint))glXGetProcAddressARB(
-      (const unsigned char *)"glBindFramebuffer");
-  glFramebufferTexture =
-      (void (*)(GLenum, GLenum, GLuint, GLint))glXGetProcAddressARB(
-          (const unsigned char *)"glFramebufferTexture");
-  glDrawBuffers = (void (*)(GLsizei, const GLenum *))glXGetProcAddressARB(
-      (const unsigned char *)"glDrawBuffers");
-  glGenBuffers = (void (*)(GLsizei n, GLuint * buffers))
-      glXGetProcAddressARB((const unsigned char *)"glGenBuffers");
-  glBindBuffer = (void (*)(GLenum target, GLuint buffer))glXGetProcAddressARB(
-      (const unsigned char *)"glBindBuffer");
-  glBufferData =
-      (void (*)(GLenum, GLsizeiptr, const void *, GLenum))glXGetProcAddressARB(
-          (const unsigned char *)"glBufferData");
-  glUniform1i = (void (*)(GLsizei, const GLint))glXGetProcAddressARB(
-      (const unsigned char *)"glUniform1i");
+  glewInit();
 
   // Initialize OpenGL
   int att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
