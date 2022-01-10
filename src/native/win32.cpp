@@ -91,13 +91,13 @@ int main(int argc, char const *argv[])
   // Create DirectSound Device
   LPDIRECTSOUND dsound;
   DirectSoundCreate(0, &dsound, 0);
-  dsound->lpVtbl->SetCooperativeLevel(dsound, window, DSSCL_PRIORITY);
+  dsound->SetCooperativeLevel(window, DSSCL_PRIORITY);
 
   // Create Primary Audio Buffer
   DSBUFFERDESC bufferDesc1 = {.dwSize = sizeof(DSBUFFERDESC),
                               .dwFlags = DSBCAPS_PRIMARYBUFFER};
   LPDIRECTSOUNDBUFFER primaryBuffer;
-  dsound->lpVtbl->CreateSoundBuffer(dsound, &bufferDesc1, &primaryBuffer, 0);
+  dsound->CreateSoundBuffer(&bufferDesc1, &primaryBuffer, 0);
   WAVEFORMATEX format = {
       .wFormatTag = WAVE_FORMAT_PCM,
       .nChannels = 2,
@@ -107,7 +107,7 @@ int main(int argc, char const *argv[])
       .nAvgBytesPerSec = 44100 * 2 * 16 / 8,
       .cbSize = 0,
   };
-  primaryBuffer->lpVtbl->SetFormat(primaryBuffer, &format);
+  primaryBuffer->SetFormat(&format);
 
   // Create Secondary Audio Buffer
   DSBUFFERDESC bufferDesc2 = {
@@ -116,7 +116,7 @@ int main(int argc, char const *argv[])
       .lpwfxFormat = &format,
   };
   LPDIRECTSOUNDBUFFER secondary_buffer;
-  dsound->lpVtbl->CreateSoundBuffer(dsound, &bufferDesc2, &secondary_buffer, 0);
+  dsound->CreateSoundBuffer(&bufferDesc2, &secondary_buffer, 0);
 
   // Create Direct3D Device and Swap-Chain
   DXGI_SWAP_CHAIN_DESC desc = {
@@ -150,8 +150,8 @@ int main(int argc, char const *argv[])
   };
   ID3D11Texture2D *gBufferTex = NULL;
   ID3D11RenderTargetView *gBuffer = NULL;
-  dev->lpVtbl->CreateTexture2D(dev, &gBufferTexDesc, NULL, &gBufferTex);
-  dev->lpVtbl->CreateRenderTargetView(dev, (ID3D11Resource *)gBufferTex,
+  dev->CreateTexture2D(&gBufferTexDesc, NULL, &gBufferTex);
+  dev->CreateRenderTargetView((ID3D11Resource *)gBufferTex,
                                       &gBufferDesc, &gBuffer);
 
   // Create Z-Buffer
@@ -170,16 +170,16 @@ int main(int argc, char const *argv[])
   };
   ID3D11Texture2D *zBufferTex = NULL;
   ID3D11DepthStencilView *zBuffer = NULL;
-  dev->lpVtbl->CreateTexture2D(dev, &zBufferTexDesc, NULL, &zBufferTex);
-  dev->lpVtbl->CreateDepthStencilView(dev, (ID3D11Resource *)zBufferTex,
+  dev->CreateTexture2D(&zBufferTexDesc, NULL, &zBufferTex);
+  dev->CreateDepthStencilView((ID3D11Resource *)zBufferTex,
                                       &zBufferDesc, &zBuffer);
 
   // Create the Backbuffer
   ID3D11Texture2D *bufferTex = NULL;
   ID3D11RenderTargetView *buffer = NULL;
-  swapchain->lpVtbl->GetBuffer(swapchain, 0, &IID_ID3D11Texture2D,
+  swapchain->GetBuffer(0, &IID_ID3D11Texture2D,
                                (void **)&bufferTex);
-  dev->lpVtbl->CreateRenderTargetView(dev, (ID3D11Resource *)bufferTex, NULL,
+  dev->CreateRenderTargetView((ID3D11Resource *)bufferTex, NULL,
                                       &buffer);
 
   // Start the Timer
@@ -232,27 +232,27 @@ int main(int argc, char const *argv[])
     float blankColor[4] = {0.0f, 0.2f, 0.4f, 1.0f};
 
     // Geometry Pass
-    context->lpVtbl->OMSetRenderTargets(context, 1, &gBuffer, zBuffer);
-    context->lpVtbl->RSSetViewports(context, 1, &viewport);
-    context->lpVtbl->ClearRenderTargetView(context, gBuffer, blankColor);
-    context->lpVtbl->ClearDepthStencilView(context, zBuffer, D3D11_CLEAR_DEPTH,
+    context->OMSetRenderTargets(1, &gBuffer, zBuffer);
+    context->RSSetViewports(1, &viewport);
+    context->ClearRenderTargetView(gBuffer, blankColor);
+    context->ClearDepthStencilView(zBuffer, D3D11_CLEAR_DEPTH,
                                            1.0f, 0);
 
     // Final Pass
-    context->lpVtbl->OMSetRenderTargets(context, 1, &buffer, zBuffer);
-    context->lpVtbl->RSSetViewports(context, 1, &viewport);
-    swapchain->lpVtbl->Present(swapchain, 0, 0);
+    context->OMSetRenderTargets(1, &buffer, zBuffer);
+    context->RSSetViewports(1, &viewport);
+    swapchain->Present(0, 0);
   }
 
-  swapchain->lpVtbl->Release(swapchain);
-  gBuffer->lpVtbl->Release(gBuffer);
-  gBufferTex->lpVtbl->Release(gBufferTex);
-  zBuffer->lpVtbl->Release(zBuffer);
-  zBufferTex->lpVtbl->Release(zBufferTex);
-  buffer->lpVtbl->Release(buffer);
-  bufferTex->lpVtbl->Release(bufferTex);
-  dev->lpVtbl->Release(dev);
-  context->lpVtbl->Release(context);
+  swapchain->Release();
+  gBuffer->Release();
+  gBufferTex->Release();
+  zBuffer->Release();
+  zBufferTex->Release();
+  buffer->Release();
+  bufferTex->Release();
+  dev->Release();
+  context->Release();
 
   // Re-enable Screensaver
   SetThreadExecutionState(ES_CONTINUOUS);
