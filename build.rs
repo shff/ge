@@ -49,8 +49,10 @@ fn main() {
         println!("cargo:rerun-if-changed=src/native/ios.mm");
     } else if target.contains("windows") {
         cc::Build::new()
+            .cpp(true)
             .flag("-Wall")
-            .file("src/native/win32.c")
+            .flag("/std:c++20")
+            .file("src/native/win32.cpp")
             .compile("native.a");
         println!("cargo:rustc-link-lib=user32");
         println!("cargo:rustc-link-lib=d3d11");
