@@ -113,6 +113,7 @@ static OSStatus audioCallback(void *inRefCon,
   _mouseMode = 2;
   _clickX = _clickY = _deltaX = _deltaY = 0.0f;
 
+  // Add test geometry - TODO: Move to Gamecode
   float tris[] = { 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 };
   _geometry[@"tri"] = [_device newBufferWithBytes:tris
                                            length:9 * sizeof(float)
