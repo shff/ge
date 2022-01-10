@@ -53,6 +53,7 @@ static OSStatus audioCallback(void *inRefCon,
 {
   _voices = (voice *)malloc(sizeof(voice) * 32);
   memset(_voices, 0, sizeof(voice) * 32);
+  _posZ = 10.0f;
 
   // Prevent sleeping
   [UIApplication sharedApplication].idleTimerDisabled = YES;
@@ -112,6 +113,11 @@ static OSStatus audioCallback(void *inRefCon,
   _mouseMode = 2;
   _clickX = _clickY = _deltaX = _deltaY = 0.0f;
 
+  float tris[] = { 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 };
+  _geometry[@"tri"] = [_device newBufferWithBytes:tris
+                                           length:9 * sizeof(float)
+                                          options:MTLResourceStorageModeShared];
+
   // Add gesture recognizers
   [_window.rootViewController.view
       addGestureRecognizer:[[UITapGestureRecognizer alloc]
@@ -149,8 +155,23 @@ static OSStatus audioCallback(void *inRefCon,
     {
     }
 
+    // Update Camera - TODO: Move to Gamecode
+    _camX += _deltaX * 0.01f;
+    _camY += _deltaY * 0.01f;
+
     // Reset Deltas
     _clickX = _clickY = _deltaX = _deltaY = 0.0f;
+
+    // Get Viewport Size
+    CGSize size = [_window frame].size;
+
+    // Matrices
+    matrix P = getProjectionMatrix(size.width, size.height, 65.f, 1.f, 1000.f);
+    matrix M = getViewMatrix(_camX, _camY, _posX, _posY, _posZ);
+    id PBuffer = [[_device newBufferWithBytes:&P length:sizeof(P)
+                                      options:0] autorelease];
+    id MBuffer = [[_device newBufferWithBytes:&M length:sizeof(M)
+                                      options:0] autorelease];
 
     // Initialize Renderer
     id<CAMetalDrawable> drawable = [_layer nextDrawable];
@@ -164,6 +185,8 @@ static OSStatus audioCallback(void *inRefCon,
     for (id buffer in _geometry.objectEnumerator)
     {
       [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
+      [encoder1 setVertexBuffer:PBuffer offset:0 atIndex:1];
+      [encoder1 setVertexBuffer:MBuffer offset:0 atIndex:2];
       [encoder1 drawPrimitives:MTLPrimitiveTypeTriangle
                    vertexStart:0
                    vertexCount:3];
@@ -198,10 +221,10 @@ static OSStatus audioCallback(void *inRefCon,
 
 - (void)onDrag:(UIPanGestureRecognizer *)recognizer
 {
-  if (_mouseMode != 0 && recognizer.state == UIGestureRecognizerStateRecognized)
+  if (_mouseMode != 0)
   {
-    _deltaX += [recognizer translationInView:recognizer.view].y;
-    _deltaY += [recognizer translationInView:recognizer.view].y;
+    _deltaX += [recognizer velocityInView:recognizer.view].x * 0.01f;
+    _deltaY += [recognizer velocityInView:recognizer.view].y * 0.01f;
   }
 }
 
@@ -232,8 +255,10 @@ static OSStatus audioCallback(void *inRefCon,
   id library = [_device newLibraryWithSource:source options:nil error:NULL];
 
   MTLRenderPipelineDescriptor *desc = [MTLRenderPipelineDescriptor new];
-  desc.vertexFunction = [library newFunctionWithName:@"v_main"];
-  desc.fragmentFunction = [library newFunctionWithName:@"f_main"];
+  desc.vertexFunction =
+      [library newFunctionWithName:[@"v_" stringByAppendingString:name]];
+  desc.fragmentFunction =
+      [library newFunctionWithName:[@"f_" stringByAppendingString:name]];
   desc.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm_sRGB;
   desc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
   return [_device newRenderPipelineStateWithDescriptor:desc error:NULL];

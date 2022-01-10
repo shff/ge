@@ -219,6 +219,7 @@ int main()
     float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
     int mouseMode = 0;
 
+    // Add test geometry - TODO: Move to Gamecode
     float tris[] = { 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 };
     geometry[@"tri"] = [device newBufferWithBytes:tris
                                            length:9 * sizeof(float)
