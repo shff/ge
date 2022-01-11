@@ -56,6 +56,7 @@ fn main() {
             .compile("native.a");
         println!("cargo:rustc-link-lib=user32");
         println!("cargo:rustc-link-lib=d3d11");
+        println!("cargo:rustc-link-lib=d3dcompiler");
         println!("cargo:rustc-link-lib=dxguid");
         println!("cargo:rustc-link-lib=dsound");
         println!("cargo:rustc-link-lib=xinput");

@@ -1,5 +1,6 @@
 #include "common.h"
 #include <d3d11.h>
+#include <d3dcompiler.h>
 #include <dsound.h>
 #include <windows.h>
 #include <xinput.h>
@@ -135,7 +136,7 @@ int main(int argc, char const *argv[])
                                 0, D3D11_SDK_VERSION, &desc, &swapchain, &dev,
                                 NULL, &context);
 
-  // Create G-Buffer Render Target
+  // Create G-Buffer Texture
   D3D11_TEXTURE2D_DESC gBufferTexDesc = {};
   gBufferTexDesc.Width = 800;
   gBufferTexDesc.Height = 600;
@@ -148,15 +149,7 @@ int main(int argc, char const *argv[])
   ID3D11Texture2D *gBufferTex = NULL;
   dev->CreateTexture2D(&gBufferTexDesc, NULL, &gBufferTex);
 
-  // Create G-Buffer
-  D3D11_RENDER_TARGET_VIEW_DESC gBufferDesc = {};
-  gBufferDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-  gBufferDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-  ID3D11RenderTargetView *gBuffer = NULL;
-  dev->CreateRenderTargetView((ID3D11Resource *)gBufferTex, &gBufferDesc,
-                              &gBuffer);
-
-  // Create Z-Buffer
+  // Create Z-Buffer Texture
   D3D11_TEXTURE2D_DESC zBufferTexDesc = {};
   zBufferTexDesc.Width = 800;
   zBufferTexDesc.Height = 600;
@@ -168,6 +161,15 @@ int main(int argc, char const *argv[])
   ID3D11Texture2D *zBufferTex = NULL;
   dev->CreateTexture2D(&zBufferTexDesc, NULL, &zBufferTex);
 
+  // Create G-Buffer
+  D3D11_RENDER_TARGET_VIEW_DESC gBufferDesc = {};
+  gBufferDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+  gBufferDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+  ID3D11RenderTargetView *gBuffer = NULL;
+  dev->CreateRenderTargetView((ID3D11Resource *)gBufferTex, &gBufferDesc,
+                              &gBuffer);
+
+  // Create Z-Buffer
   D3D11_DEPTH_STENCIL_VIEW_DESC zBufferDesc = {};
   zBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
   zBufferDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -180,6 +182,31 @@ int main(int argc, char const *argv[])
   ID3D11RenderTargetView *buffer = NULL;
   swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&bufferTex);
   dev->CreateRenderTargetView((ID3D11Resource *)bufferTex, NULL, &buffer);
+
+  // Create Post-Processing Vertex Shader
+  ID3D11VertexShader *vertexShader = NULL;
+  ID3D10Blob *vertexShaderBlob = NULL;
+  D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "vs_4_0", 0, 0,
+                     &vertexShaderBlob, NULL);
+  dev->CreateVertexShader(vertexShaderBlob->GetBufferPointer(),
+                          vertexShaderBlob->GetBufferSize(), NULL,
+                          &vertexShader);
+
+  // Create Post-Processing Pixel Shader
+  ID3D11PixelShader *pixelShader = NULL;
+  ID3D10Blob *pixelShaderBlob = NULL;
+  D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "ps_4_0", 0, 0,
+                     &pixelShaderBlob, NULL);
+  dev->CreatePixelShader(pixelShaderBlob->GetBufferPointer(),
+                         pixelShaderBlob->GetBufferSize(), NULL, &pixelShader);
+
+  // Create Post-Processing Input Layout
+  D3D11_INPUT_ELEMENT_DESC inputDesc[] = { { "POSITION", 0,
+                                             DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+                                             D3D11_INPUT_PER_VERTEX_DATA, 0 } };
+  ID3D11InputLayout *inputLayout = NULL;
+  dev->CreateInputLayout(inputDesc, 1, vertexShaderBlob->GetBufferPointer(),
+                         vertexShaderBlob->GetBufferSize(), &inputLayout);
 
   // Start the Timer
   long long timerResolution;
@@ -242,13 +269,15 @@ int main(int argc, char const *argv[])
     swapchain->Present(0, 0);
   }
 
-  swapchain->Release();
+  vertexShader->Release();
+  pixelShader->Release();
   gBuffer->Release();
   gBufferTex->Release();
   zBuffer->Release();
   zBufferTex->Release();
   buffer->Release();
   bufferTex->Release();
+  swapchain->Release();
   dev->Release();
   context->Release();
 
