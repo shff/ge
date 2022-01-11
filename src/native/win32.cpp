@@ -184,29 +184,32 @@ int main(int argc, char const *argv[])
   dev->CreateRenderTargetView((ID3D11Resource *)bufferTex, NULL, &buffer);
 
   // Create Post-Processing Vertex Shader
-  ID3D11VertexShader *vertexShader = NULL;
-  ID3D10Blob *vertexShaderBlob = NULL;
+  ID3D11VertexShader *postVertexShader = NULL;
+  ID3D10Blob *postVertexShaderBlob = NULL;
   D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "vs_4_0", 0, 0,
-                     &vertexShaderBlob, NULL);
-  dev->CreateVertexShader(vertexShaderBlob->GetBufferPointer(),
-                          vertexShaderBlob->GetBufferSize(), NULL,
-                          &vertexShader);
+                     &postVertexShaderBlob, NULL);
+  dev->CreateVertexShader(postVertexShaderBlob->GetBufferPointer(),
+                          postVertexShaderBlob->GetBufferSize(), NULL,
+                          &postVertexShader);
 
   // Create Post-Processing Pixel Shader
-  ID3D11PixelShader *pixelShader = NULL;
-  ID3D10Blob *pixelShaderBlob = NULL;
+  ID3D11PixelShader *postPixelShader = NULL;
+  ID3D10Blob *postPixelShaderBlob = NULL;
   D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "ps_4_0", 0, 0,
-                     &pixelShaderBlob, NULL);
-  dev->CreatePixelShader(pixelShaderBlob->GetBufferPointer(),
-                         pixelShaderBlob->GetBufferSize(), NULL, &pixelShader);
+                     &postPixelShaderBlob, NULL);
+  dev->CreatePixelShader(postPixelShaderBlob->GetBufferPointer(),
+                         postPixelShaderBlob->GetBufferSize(), NULL,
+                         &postPixelShader);
 
   // Create Post-Processing Input Layout
-  D3D11_INPUT_ELEMENT_DESC inputDesc[] = { { "POSITION", 0,
-                                             DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
-                                             D3D11_INPUT_PER_VERTEX_DATA, 0 } };
-  ID3D11InputLayout *inputLayout = NULL;
-  dev->CreateInputLayout(inputDesc, 1, vertexShaderBlob->GetBufferPointer(),
-                         vertexShaderBlob->GetBufferSize(), &inputLayout);
+  D3D11_INPUT_ELEMENT_DESC postInputDesc[] = {
+    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,
+      D3D11_INPUT_PER_VERTEX_DATA, 0 }
+  };
+  ID3D11InputLayout *postInputLayout = NULL;
+  dev->CreateInputLayout(
+      postInputDesc, 1, postVertexShaderBlob->GetBufferPointer(),
+      postVertexShaderBlob->GetBufferSize(), &postInputLayout);
 
   // Start the Timer
   long long timerResolution;
@@ -266,11 +269,16 @@ int main(int argc, char const *argv[])
     // Final Pass
     context->OMSetRenderTargets(1, &buffer, zBuffer);
     context->RSSetViewports(1, &viewport);
+    context->VSSetShader(postVertexShader, 0, 0);
+    context->PSSetShader(postPixelShader, 0, 0);
+    context->IASetInputLayout(postInputLayout);
+    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    context->DrawIndexed(4, 0, 0);
     swapchain->Present(0, 0);
   }
 
-  vertexShader->Release();
-  pixelShader->Release();
+  postVertexShader->Release();
+  postPixelShader->Release();
   gBuffer->Release();
   gBufferTex->Release();
   zBuffer->Release();
