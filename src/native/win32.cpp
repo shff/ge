@@ -186,7 +186,7 @@ int main(int argc, char const *argv[])
   // Create Post-Processing Vertex Shader
   ID3D11VertexShader *postVertexShader = NULL;
   ID3D10Blob *postVertexShaderBlob = NULL;
-  D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "vs_4_0", 0, 0,
+  D3DCompileFromFile(L"shaders.hlsl", NULL, NULL, "post_vs", "vs_4_0", 0, 0,
                      &postVertexShaderBlob, NULL);
   dev->CreateVertexShader(postVertexShaderBlob->GetBufferPointer(),
                           postVertexShaderBlob->GetBufferSize(), NULL,
@@ -195,7 +195,7 @@ int main(int argc, char const *argv[])
   // Create Post-Processing Pixel Shader
   ID3D11PixelShader *postPixelShader = NULL;
   ID3D10Blob *postPixelShaderBlob = NULL;
-  D3DCompileFromFile(L"post_process.hlsl", NULL, NULL, "main", "ps_4_0", 0, 0,
+  D3DCompileFromFile(L"shaders.hlsl", NULL, NULL, "post_fs", "ps_4_0", 0, 0,
                      &postPixelShaderBlob, NULL);
   dev->CreatePixelShader(postPixelShaderBlob->GetBufferPointer(),
                          postPixelShaderBlob->GetBufferSize(), NULL,
