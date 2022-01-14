@@ -61,12 +61,21 @@ fn main() {
         println!("cargo:rustc-link-lib=dsound");
         println!("cargo:rustc-link-lib=xinput");
     } else if target.contains("android") {
+        let ndk_root = std::env::var("ANDROID_NDK_HOME").unwrap();
         cc::Build::new()
             .cpp(true)
             .flag("-O3")
             .flag("-Wall")
             .flag("-Werror")
             .flag("-Wno-unused-parameter")
+            .flag(format!("-I{}/sources/android/native_app_glue", ndk_root).as_str())
+            .file(
+                format!(
+                    "{}/sources/android/native_app_glue/android_native_app_glue.h",
+                    ndk_root
+                )
+                .as_str(),
+            )
             .file("src/native/android.cpp")
             .compile("native.a");
         println!("cargo:rerun-if-changed=src/native/android.cpp");
