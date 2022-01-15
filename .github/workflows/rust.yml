@@ -16,7 +16,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - run: sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
+      - run: sudo mv /Library/Developer/CommandLineTools/SDKs/ /Library/Developer/CommandLineTools/SDKs_old/
       - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin x86_64-apple-ios aarch64-apple-ios wasm32-unknown-unknown
       - run: cargo install cargo-bundle || true
       - run: cargo update
