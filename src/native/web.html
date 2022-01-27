@@ -57,7 +57,7 @@
         window.addEventListener("resize", () => createBuffer());
 
         // Initialize Timer
-        let timerCurrent = performance.now(), lag = 0;
+        let timerCurrent = performance.now(), lag = 0, ticks = 0;
         let mouseMode = 2, clickX = 0, clickY = 0, deltaX = 0, deltaY = 0;
 
         // Events
@@ -94,6 +94,7 @@
           // Fixed updates
           for (lag += timerDelta; lag >= 1 / 60; lag -= 1 / 60)
           {
+            ticks += 1 / 60;
           }
 
           // Reset Deltas

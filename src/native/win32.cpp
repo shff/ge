@@ -216,6 +216,7 @@ int main(int argc, char const *argv[])
   QueryPerformanceFrequency((LARGE_INTEGER *)&timerResolution);
   QueryPerformanceCounter((LARGE_INTEGER *)&timerCurrent);
   double lag = 0;
+  double ticks = 0;
 
   // Reset Deltas
   deltaX = deltaY = clickX = clickY = 0.0f;
@@ -249,6 +250,7 @@ int main(int argc, char const *argv[])
     // Fixed updates
     for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
+      ticks += 1.0 / 60.0;
     }
 
     // Reset Deltas

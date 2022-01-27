@@ -115,6 +115,7 @@ int main()
   clock_gettime(CLOCK_MONOTONIC, &time);
   uint64_t timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
   uint64_t lag = 0.0;
+  uint64_t ticks = 0.0;
   uint64_t xscreenLag = 0.0;
 
   while (1)
@@ -188,6 +189,7 @@ int main()
     // Fixed updates
     for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
+      ticks += 1.0 / 60.0;
     }
 
     // Update Camera - TODO: Move to Gamecode

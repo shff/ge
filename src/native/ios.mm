@@ -110,6 +110,7 @@ static OSStatus audioCallback(void *inRefCon,
   // Initialize state
   _timerCurrent = CACurrentMediaTime();
   _lag = 0.0;
+  _ticks = 0.0;
   _mouseMode = 2;
   _clickX = _clickY = _deltaX = _deltaY = 0.0f;
 
@@ -154,6 +155,7 @@ static OSStatus audioCallback(void *inRefCon,
     // Fixed updates
     for (_lag += timerDelta; _lag >= 1.0 / 60.0; _lag -= 1.0 / 60.0)
     {
+      _ticks += 1.0 / 60.0;
     }
 
     // Update Camera - TODO: Move to Gamecode

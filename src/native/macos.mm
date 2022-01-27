@@ -267,7 +267,7 @@ int main()
 
     // Start the Timer
     double timerCurrent = CACurrentMediaTime();
-    double timerStart = timerCurrent;
+    double ticks = 0.0;
     double lag = 0.0;
 
     // Game Loop
@@ -334,12 +334,11 @@ int main()
         double timerNext = CACurrentMediaTime();
         double timerDelta = timerNext - timerCurrent;
         timerCurrent = timerNext;
-        double ticks = (timerCurrent - timerStart) * 1000.0f;
-        (void)ticks;
 
         // Fixed updates
         for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
         {
+          ticks += 1.0 / 60.0;
         }
 
         // Update Camera - TODO: Move to Gamecode

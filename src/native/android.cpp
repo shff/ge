@@ -180,6 +180,7 @@ void android_main(struct android_app *app)
   clock_gettime(CLOCK_MONOTONIC, &time);
   timerCurrent = (time.tv_sec * 10E8 + time.tv_nsec);
   uint64_t lag = 0.0;
+  uint64_t ticks = 0.0;
 
   // Reset Deltas
   clickX = clickY = deltaX = deltaY = 0.0f;
@@ -202,6 +203,7 @@ void android_main(struct android_app *app)
     // Fixed updates
     for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
     {
+      ticks += 1.0 / 60.0;
     }
 
     // Reset Deltas
