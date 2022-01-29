@@ -250,16 +250,6 @@ int main()
                   running = 0;
                 }];
 
-    // Setup Resize Observer
-    __block int needsBuffer = 1;
-    [[NSNotificationCenter defaultCenter]
-        addObserverForName:NSWindowDidResizeNotification
-                    object:window
-                     queue:nil
-                usingBlock:^(NSNotification *notification) {
-                  needsBuffer = 1;
-                }];
-
     // Finish loading
     [app setActivationPolicy:NSApplicationActivationPolicyRegular];
     [app activateIgnoringOtherApps:YES];
@@ -269,6 +259,7 @@ int main()
     double timerCurrent = CACurrentMediaTime();
     double ticks = 0.0;
     double lag = 0.0;
+    int width = 0, height = 0;
 
     // Game Loop
     while (running)
@@ -354,7 +345,7 @@ int main()
         CGSize size = [window.contentView convertRectToBacking:frame].size;
 
         // Rebuild Textures if necessary
-        if (needsBuffer)
+        if (size.width != width || size.height != height)
         {
           [layer setDrawableSize:size];
 
@@ -374,7 +365,8 @@ int main()
           desc.pixelFormat = MTLPixelFormatDepth32Float_Stencil8;
           depthTexture = [[device newTextureWithDescriptor:desc] autorelease];
 
-          needsBuffer = 0;
+          width = size.width;
+          height = size.height;
         }
 
         // Setup Matrices
