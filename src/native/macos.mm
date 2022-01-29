@@ -296,6 +296,7 @@ int main()
 
             // Mouse Events
             case NSEventTypeLeftMouseDown:
+              [app sendEvent:event];
               if (mouseMode != 0) break;
 
               clickX = [event locationInWindow].x;
