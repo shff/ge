@@ -40,12 +40,11 @@ static OSStatus audioCallback(void *inRefCon,
 @property(nonatomic, assign) id<MTLRenderPipelineState> quadShader, postShader;
 @property(nonatomic, assign) MTLRenderPassDescriptor *quadPass, *postPass;
 @property(nonatomic, assign) NSMutableDictionary *geometry;
-@property(nonatomic, assign) double lag;
 @property(nonatomic, assign) voice *voices;
+@property(nonatomic, assign) double timerCurrent, lag, ticks;
 @property(nonatomic, assign) float clickX, clickY, deltaX, deltaY;
 @property(nonatomic, assign) float posX, posY, posZ, camX, camY;
 @property(nonatomic, assign) int mouseMode;
-@property(nonatomic, assign) double timerCurrent;
 @end
 
 @implementation App
