@@ -62,6 +62,7 @@ fn main() {
         println!("cargo:rustc-link-lib=xinput");
     } else if target.contains("android") {
         let ndk_root = std::env::var("ANDROID_NDK_HOME").unwrap();
+        let glue_path = "/sources/android/native_app_glue/android_native_app_glue.c";
         cc::Build::new()
             .cpp(true)
             .flag("-O3")
@@ -69,13 +70,7 @@ fn main() {
             .flag("-Werror")
             .flag("-Wno-unused-parameter")
             .flag(format!("-I{}/sources/android/native_app_glue", ndk_root).as_str())
-            .file(
-                format!(
-                    "{}/sources/android/native_app_glue/android_native_app_glue.h",
-                    ndk_root
-                )
-                .as_str(),
-            )
+            .file(format!("{}{}", ndk_root, glue_path).as_str())
             .file("src/native/android.cpp")
             .compile("native.a");
         println!("cargo:rerun-if-changed=src/native/android.cpp");
