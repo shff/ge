@@ -213,7 +213,7 @@ int main()
     id<MTLTexture> depthTexture, albedoTexture;
 
     // Initialize state
-    NSMutableArray *keysDown = [[NSMutableArray alloc] init];
+    NSMutableDictionary *keysDown = [[NSMutableDictionary alloc] init];
     NSMutableDictionary *geometry = [[NSMutableDictionary alloc] init];
     float clickX = 0.0f, clickY = 0.0f, deltaX = 0.0f, deltaY = 0.0f;
     float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
@@ -259,7 +259,7 @@ int main()
     double timerCurrent = CACurrentMediaTime();
     double ticks = 0.0;
     double lag = 0.0;
-    int width = 0, height = 0;
+    unsigned int width = 0, height = 0;
 
     // Game Loop
     while (running)
@@ -279,10 +279,10 @@ int main()
               if ([event modifierFlags] & NSEventModifierFlagCommand)
                 [app sendEvent:event];
               else
-                [keysDown addObject:[event charactersIgnoringModifiers]];
+                keysDown[[event charactersIgnoringModifiers]] = @YES;
               break;
             case NSEventTypeKeyUp:
-              [keysDown removeObject:[event charactersIgnoringModifiers]];
+              [keysDown removeObjectForKey:[event charactersIgnoringModifiers]];
               break;
 
             // Mouse Events
