@@ -336,6 +336,10 @@ int main()
         // Update Camera - TODO: Move to Gamecode
         camX += deltaX * 0.01f;
         camY += deltaY * 0.01f;
+        if ([keysDown objectForKey:@"w"]) posZ -= 0.1f;
+        if ([keysDown objectForKey:@"s"]) posZ += 0.1f;
+        if ([keysDown objectForKey:@"a"]) posX -= 0.1f;
+        if ([keysDown objectForKey:@"d"]) posX += 0.1f;
 
         // Reset Deltas
         clickX = clickY = deltaX = deltaY = 0.0f;
