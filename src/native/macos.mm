@@ -382,11 +382,9 @@ int main()
         id<CAMetalDrawable> drawable = [layer nextDrawable];
         id buffer = [queue commandBuffer];
 
-        // Setup Geometry Pass
+        // Geometry Pass
         geometryPass.colorAttachments[0].texture = albedoTexture;
         geometryPass.depthAttachment.texture = depthTexture;
-
-        // Render Geometry
         id encoder1 = [[buffer renderCommandEncoderWithDescriptor:geometryPass]
             autorelease];
         [encoder1 setRenderPipelineState:geometryShader];
@@ -401,11 +399,9 @@ int main()
         }
         [encoder1 endEncoding];
 
-        // Setup Post-Processing Pass
+        // Post-processing Pass
         postPass.colorAttachments[0].texture = drawable.texture;
         postPass.depthAttachment.texture = depthTexture;
-
-        // Render Final Quad
         id encoder2 =
             [[buffer renderCommandEncoderWithDescriptor:postPass] autorelease];
         [encoder2 setRenderPipelineState:postShader];
