@@ -389,8 +389,7 @@ int main()
         // Geometry Pass
         geometryPass.colorAttachments[0].texture = albedoTexture;
         geometryPass.depthAttachment.texture = depthTexture;
-        id encoder1 = [[buffer renderCommandEncoderWithDescriptor:geometryPass]
-            autorelease];
+        id encoder1 = [buffer renderCommandEncoderWithDescriptor:geometryPass];
         [encoder1 setRenderPipelineState:geometryShader];
         for (id buffer in geometry.objectEnumerator)
         {
@@ -406,8 +405,7 @@ int main()
         // Post-processing Pass
         postPass.colorAttachments[0].texture = drawable.texture;
         postPass.depthAttachment.texture = depthTexture;
-        id encoder2 =
-            [[buffer renderCommandEncoderWithDescriptor:postPass] autorelease];
+        id encoder2 = [buffer renderCommandEncoderWithDescriptor:postPass];
         [encoder2 setRenderPipelineState:postShader];
         [encoder2 setFragmentTexture:albedoTexture atIndex:0];
         [encoder2 drawPrimitives:MTLPrimitiveTypeTriangleStrip
