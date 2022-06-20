@@ -11,7 +11,7 @@ vertex float4 v_quad(
 }
 fragment half4 f_quad()
 {
-    return half4(0, 0, 0, 1);
+    return half4(1, 1, 1, 1);
 }
 
 vertex float4 v_post(uint idx [[vertex_id]])
@@ -21,9 +21,11 @@ vertex float4 v_post(uint idx [[vertex_id]])
 }
 fragment half4 f_post(
     float4 in [[ position ]],
-    texture2d<half> albedo [[ texture(0) ]]
+    texture2d<half> albedo [[ texture(0) ]],
+    depth2d<float> depth [[ texture(1) ]]
 )
 {
     constexpr sampler Sampler(coord::pixel, filter::nearest);
-    return half4(albedo.sample(Sampler, in.xy).xyz, 1);
+    float z = depth.sample(Sampler, in.xy);
+    return half4(half3(z * albedo.sample(Sampler, in.xy)), 1);
 }

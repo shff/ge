@@ -416,6 +416,7 @@ int main()
         id encoder2 = [buffer renderCommandEncoderWithDescriptor:postPass];
         [encoder2 setRenderPipelineState:postShader];
         [encoder2 setFragmentTexture:albedoTexture atIndex:0];
+        [encoder2 setFragmentTexture:depthTexture atIndex:1];
         [encoder2 drawPrimitives:MTLPrimitiveTypeTriangleStrip
                      vertexStart:0
                      vertexCount:4];
