@@ -219,6 +219,13 @@ int main()
     float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
     int mouseMode = 0;
 
+    // Stencil
+    MTLDepthStencilDescriptor *stencilDesc = [MTLDepthStencilDescriptor new];
+    stencilDesc.depthCompareFunction = MTLCompareFunctionLess;
+    stencilDesc.depthWriteEnabled = YES;
+    id<MTLDepthStencilState> stencil =
+        [device newDepthStencilStateWithDescriptor:stencilDesc];
+
     // Add test geometry - TODO: Move to Gamecode
     float tris[] = { 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 };
     geometry[@"tri"] = [device newBufferWithBytes:tris
@@ -391,6 +398,7 @@ int main()
         geometryPass.depthAttachment.texture = depthTexture;
         id encoder1 = [buffer renderCommandEncoderWithDescriptor:geometryPass];
         [encoder1 setRenderPipelineState:geometryShader];
+        [encoder1 setDepthStencilState:stencil];
         for (id buffer in geometry.objectEnumerator)
         {
           [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
