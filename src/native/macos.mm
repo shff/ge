@@ -51,7 +51,7 @@ MTLRenderPassDescriptor *createPass(int textures, MTLLoadAction action)
   {
     pass.colorAttachments[i].loadAction = action;
     pass.colorAttachments[i].storeAction = MTLStoreActionStore;
-    pass.colorAttachments[i].clearColor = MTLClearColorMake(1, 0, 0, 1);
+    pass.colorAttachments[i].clearColor = MTLClearColorMake(0.01, 0, 0, 1);
   }
   pass.depthAttachment.clearDepth = 1.0;
   pass.depthAttachment.loadAction = action;
@@ -215,9 +215,9 @@ int main()
     // Initialize state
     NSMutableDictionary *keysDown = [[NSMutableDictionary alloc] init];
     NSMutableDictionary *geometry = [[NSMutableDictionary alloc] init];
-    float clickX = 0.0f, clickY = 0.0f, deltaX = 0.0f, deltaY = 0.0f;
+    float deltaX = 0.0f, deltaY = 0.0f;
     float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
-    int mouseMode = 0;
+    int mouseMode = 2;
 
     // Stencil
     MTLDepthStencilDescriptor *stencilDesc = [MTLDepthStencilDescriptor new];
@@ -274,59 +274,41 @@ int main()
       @autoreleasepool
       {
         NSEvent *event;
+        NSPoint click;
         while ((event = [app nextEventMatchingMask:NSEventMaskAny
                                          untilDate:[NSDate distantPast]
                                             inMode:NSDefaultRunLoopMode
                                            dequeue:YES]) != nil)
         {
-          switch ([event type])
-          {
-            // Key Events
-            case NSEventTypeKeyDown:
-              if ([event modifierFlags] & NSEventModifierFlagCommand)
-                [app sendEvent:event];
-              else
-                keysDown[[event charactersIgnoringModifiers]] = @YES;
-              break;
-            case NSEventTypeKeyUp:
-              [keysDown removeObjectForKey:[event charactersIgnoringModifiers]];
-              break;
-
-            // Mouse Events
-            case NSEventTypeLeftMouseDown:
-              [app sendEvent:event];
-              if (mouseMode != 0) break;
-
-              clickX = [event locationInWindow].x;
-              clickY = [event locationInWindow].y;
-              break;
-            case NSEventTypeMouseMoved:
-              if (![window.contentView hitTest:[event locationInWindow]])
-                toggleMouse(true);
-              else if (mouseMode == 1)
-              {
-                toggleMouse(false);
-                deltaX += [event deltaX];
+          if ([event type] == NSEventTypeKeyDown &&
+              [event modifierFlags] & NSEventModifierFlagCommand)
+            [app sendEvent:event];
+          else if ([event type] == NSEventTypeKeyDown)
+            keysDown[[event charactersIgnoringModifiers]] = @YES;
+          else if ([event type] == NSEventTypeKeyUp)
+            [keysDown removeObjectForKey:[event charactersIgnoringModifiers]];
+          else if ([event type] == NSEventTypeLeftMouseDown &&
+                   [window.contentView hitTest:[event locationInWindow]] &&
+                   mouseMode == 0)
+            click = [event locationInWindow];
+          else if ([event type] == NSEventTypeMouseMoved &&
+                   ![window.contentView hitTest:[event locationInWindow]])
+            toggleMouse(true);
+          else if ([event type] == NSEventTypeMouseMoved && mouseMode == 1)
+            toggleMouse(false), deltaX += [event deltaX],
                 deltaY += [event deltaY];
-              }
-              break;
-            case NSEventTypeLeftMouseUp:
-              if (mouseMode == 2) toggleMouse(true);
-              if (mouseMode == 0 || [event clickCount] == 0) break;
-
-              clickX = [event locationInWindow].x;
-              clickY = [event locationInWindow].y;
-              break;
-            case NSEventTypeLeftMouseDragged:
-              if (![window.contentView hitTest:[event locationInWindow]]) break;
-              if (mouseMode != 2) break;
-
-              toggleMouse(false);
-              deltaX += [event deltaX];
-              deltaY += [event deltaY];
-              break;
-            default: [app sendEvent:event]; break;
-          }
+          else if ([event type] == NSEventTypeLeftMouseUp && mouseMode == 2)
+            toggleMouse(true);
+          else if ([event type] == NSEventTypeLeftMouseUp && mouseMode != 0 &&
+                   [event clickCount] > 0)
+            click = [event locationInWindow];
+          else if ([event type] == NSEventTypeLeftMouseDragged &&
+                   [window.contentView hitTest:[event locationInWindow]] &&
+                   mouseMode == 2)
+            toggleMouse(false), deltaX += [event deltaX],
+                deltaY += [event deltaY];
+          else
+            [app sendEvent:event];
         }
 
         // Update Timer
@@ -349,7 +331,8 @@ int main()
         if ([keysDown objectForKey:@"d"]) posX += 0.1f;
 
         // Reset Deltas
-        clickX = clickY = deltaX = deltaY = 0.0f;
+        deltaX = deltaY = 0.0f;
+        (void)ticks;
 
         // Get Viewport Size
         CGRect frame = [window.contentView frame];
