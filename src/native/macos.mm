@@ -212,19 +212,19 @@ int main()
     MTLRenderPassDescriptor *geometryPass = createPass(1, MTLLoadActionClear);
     id<MTLTexture> depthTexture, albedoTexture;
 
-    // Initialize state
-    NSMutableDictionary *keysDown = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary *geometry = [[NSMutableDictionary alloc] init];
-    float deltaX = 0.0f, deltaY = 0.0f;
-    float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
-    int mouseMode = 2;
-
     // Stencil
     MTLDepthStencilDescriptor *stencilDesc = [MTLDepthStencilDescriptor new];
     stencilDesc.depthCompareFunction = MTLCompareFunctionLess;
     stencilDesc.depthWriteEnabled = YES;
     id<MTLDepthStencilState> stencil =
         [device newDepthStencilStateWithDescriptor:stencilDesc];
+
+    // Initialize state
+    NSMutableDictionary *keysDown = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary *geometry = [[NSMutableDictionary alloc] init];
+    float deltaX = 0.0f, deltaY = 0.0f;
+    float posX = 0.0f, posY = 0.0f, posZ = 10.0f, camX = 0.0f, camY = 0.f;
+    int mouseMode = 2;
 
     // Add test geometry - TODO: Move to Gamecode
     float tris[] = { 0.0, 0.8, 0.0, -0.8, -0.8, 0.0, 0.8, -0.8, 0.0 };
