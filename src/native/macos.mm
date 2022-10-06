@@ -316,10 +316,18 @@ int main()
         timerCurrent = timerNext;
 
         // Fixed updates
+        // TODO - Just calculate amount of frames, and pass it to Update()
         for (lag += timerDelta; lag >= 1.0 / 60.0; lag -= 1.0 / 60.0)
         {
           ticks += 1.0 / 60.0;
         }
+
+        // TODO - Call Update() around here.
+        //  - It should receive keysDown, delta/click, timerDelta and screen size (?)
+        //  - Maybe it should also receive the amount of fixedUpdates...
+        //  - Do we really need to let it know the timerDelta? Or are fixed frames enough?
+        //  - It should return/modify a render queue
+        //  - How should it communicate which resources to load? (textures, shaders, etc)
 
         // Update Camera - TODO: Move to Gamecode
         camX += deltaX * 0.01f;
@@ -334,6 +342,7 @@ int main()
         (void)ticks;
 
         // Get Viewport Size
+        // TODO - Should we pass this to the game layer? What if it needs to know about mouse position?
         CGRect frame = [window.contentView frame];
         CGSize size = [window.contentView convertRectToBacking:frame].size;
 
@@ -343,6 +352,7 @@ int main()
           [layer setDrawableSize:size];
 
           // Setup Texture Descriptors
+          // TODO - Handle configurable amounts of textures and passes
           MTLTextureDescriptor *desc =
               [[[MTLTextureDescriptor alloc] init] autorelease];
           desc.storageMode = MTLStorageModePrivate;
@@ -381,6 +391,8 @@ int main()
         id encoder1 = [buffer renderCommandEncoderWithDescriptor:geometryPass];
         [encoder1 setRenderPipelineState:geometryShader];
         [encoder1 setDepthStencilState:stencil];
+
+        // TODO - Geometry should actually be a queue of objects
         for (id buffer in geometry.objectEnumerator)
         {
           [encoder1 setVertexBuffer:buffer offset:0 atIndex:0];
@@ -393,6 +405,7 @@ int main()
         [encoder1 endEncoding];
 
         // Post-processing Pass
+        // TODO - Handle configurable amounts of textures and passes
         postPass.colorAttachments[0].texture = drawable.texture;
         postPass.depthAttachment.texture = depthTexture;
         id encoder2 = [buffer renderCommandEncoderWithDescriptor:postPass];
