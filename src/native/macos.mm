@@ -287,24 +287,23 @@ int main()
             keysDown[[event charactersIgnoringModifiers]] = @YES;
           else if ([event type] == NSEventTypeKeyUp)
             [keysDown removeObjectForKey:[event charactersIgnoringModifiers]];
-          else if ([event type] == NSEventTypeLeftMouseDown &&
-                   [window.contentView hitTest:[event locationInWindow]] &&
-                   mouseMode == 0)
+          // Mouse click start (mode 0) or click end (mode 1/2)
+          else if (([event type] == NSEventTypeLeftMouseDown &&
+                    [window.contentView hitTest:[event locationInWindow]] &&
+                    mouseMode == 0) ||
+                   ([event type] == NSEventTypeLeftMouseUp && mouseMode != 0 &&
+                    [event clickCount] > 0))
             click = [event locationInWindow];
-          else if ([event type] == NSEventTypeMouseMoved &&
-                   ![window.contentView hitTest:[event locationInWindow]])
+          // Mouse is outside the window, or we finished dragging (mode 2)
+          else if (([event type] == NSEventTypeMouseMoved &&
+                    ![window.contentView hitTest:[event locationInWindow]]) ||
+                   ([event type] == NSEventTypeLeftMouseUp && mouseMode == 2))
             toggleMouse(true);
-          else if ([event type] == NSEventTypeMouseMoved && mouseMode == 1)
-            toggleMouse(false), deltaX += [event deltaX],
-                deltaY += [event deltaY];
-          else if ([event type] == NSEventTypeLeftMouseUp && mouseMode == 2)
-            toggleMouse(true);
-          else if ([event type] == NSEventTypeLeftMouseUp && mouseMode != 0 &&
-                   [event clickCount] > 0)
-            click = [event locationInWindow];
-          else if ([event type] == NSEventTypeLeftMouseDragged &&
-                   [window.contentView hitTest:[event locationInWindow]] &&
-                   mouseMode == 2)
+          // Mouse moved (mode 1) or dragged (mode 2)
+          else if (([event type] == NSEventTypeMouseMoved && mouseMode == 1) ||
+                   ([event type] == NSEventTypeLeftMouseDragged &&
+                    [window.contentView hitTest:[event locationInWindow]] &&
+                    mouseMode == 2))
             toggleMouse(false), deltaX += [event deltaX],
                 deltaY += [event deltaY];
           else
