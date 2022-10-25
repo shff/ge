@@ -1,0 +1,44 @@
+name: Build
+
+on: [push]
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo mv /Library/Developer/CommandLineTools/SDKs/ /Library/Developer/CommandLineTools/SDKs_old/
+      - run: make macos
+      - run: make ios-sim
+      - run: make ios
+      - uses: actions/upload-artifact@v2
+        with:
+          name: macos
+          path: |
+            build/macOS.app
+            build/iOS-Sim.app
+            build/iOS.app
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make win32
+      - uses: actions/upload-artifact@v2
+        with:
+          name: win32
+          path: |
+            build/win32.exe
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo dpkg --add-architecture i386 && sudo apt-get update && sudo apt-get install libc6-dev libc6-dev-i386 mesa-common-dev libgl1-mesa-dev libgl1 libasound2-dev libglew-dev
+      - run: make x11
+      - run: echo "/usr/local/lib/android/sdk/ndk/22.1.7171670/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+      - run: make android
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux
+          path: |
+            build/android.so
+            build/x11

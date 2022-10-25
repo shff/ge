@@ -5,12 +5,6 @@
 #include <windows.h>
 #include <xinput.h>
 
-#pragma comment(lib, "user32")
-#pragma comment(lib, "d3d11")
-#pragma comment(lib, "dxguid")
-#pragma comment(lib, "dsound")
-#pragma comment(lib, "xinput")
-
 float mouseX, mouseY, clickX, clickY, deltaX, deltaY;
 int mouseMode = 2;
 long long timerCurrent;
