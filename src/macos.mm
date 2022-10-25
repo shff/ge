@@ -4,6 +4,7 @@
 @import QuartzCore;
 @import AudioToolbox;
 #include "common.h"
+#include <dlfcn.h>
 
 static OSStatus audioCallback(void *inRefCon,
                               AudioUnitRenderActionFlags *ioActionFlags,
@@ -69,6 +70,13 @@ int main()
     id bundleName = [[NSProcessInfo processInfo] processName];
     id displayName =
         [[NSBundle mainBundle] infoDictionary][@"CFBundleDisplayName"];
+    NSString *clientPath = [[NSBundle mainBundle] pathForResource:@"client"
+                                                           ofType:@"so"];
+
+    // Get client path and timestamp
+    NSDate *clientDate = NULL;
+    void *client = NULL;
+    void (*updateFunction)(void) = NULL;
 
     // Prevent Sleeping
     IOPMAssertionID assertionID;
@@ -310,6 +318,19 @@ int main()
             [app sendEvent:event];
         }
 
+        // Load or reload client if necessary
+        NSDate *newTimestamp = [[[NSFileManager defaultManager]
+            attributesOfItemAtPath:clientPath
+                             error:NULL] fileModificationDate];
+        if (clientPath && (!clientDate || [newTimestamp compare:clientDate] ==
+                                              NSOrderedDescending))
+        {
+          if (client) dlclose(client);
+          client = dlopen([clientPath UTF8String], RTLD_LAZY);
+          if (client) updateFunction = (void (*)(void))dlsym(client, "update");
+          clientDate = newTimestamp;
+        }
+
         // Update Timer
         double timerNext = CACurrentMediaTime();
         double timerDelta = timerNext - timerCurrent;
@@ -323,11 +344,15 @@ int main()
         }
 
         // TODO - Call Update() around here.
-        //  - It should receive keysDown, delta/click, timerDelta and screen size (?)
+        //  - It should receive keysDown, delta/click, timerDelta and screen
+        //  size (?)
         //  - Maybe it should also receive the amount of fixedUpdates...
-        //  - Do we really need to let it know the timerDelta? Or are fixed frames enough?
+        //  - Do we really need to let it know the timerDelta? Or are fixed
+        //  frames enough?
         //  - It should return/modify a render queue
-        //  - How should it communicate which resources to load? (textures, shaders, etc)
+        //  - How should it communicate which resources to load? (textures,
+        //  shaders, etc)
+        if (updateFunction) updateFunction();
 
         // Update Camera - TODO: Move to Gamecode
         camX += deltaX * 0.01f;
@@ -342,7 +367,8 @@ int main()
         (void)ticks;
 
         // Get Viewport Size
-        // TODO - Should we pass this to the game layer? What if it needs to know about mouse position?
+        // TODO - Should we pass this to the game layer? What if it needs to
+        // know about mouse position?
         CGRect frame = [window.contentView frame];
         CGSize size = [window.contentView convertRectToBacking:frame].size;
 
