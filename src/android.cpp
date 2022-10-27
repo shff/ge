@@ -156,6 +156,8 @@ void android_main(struct android_app *app)
       ticks += 1.0 / 60.0;
     }
 
+    (void)ticks;
+
     // Reset Deltas
     clickX = clickY = deltaX = deltaY = 0.0f;
 

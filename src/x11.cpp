@@ -204,6 +204,8 @@ int main()
     matrix P =
         getProjectionMatrix(attr.width, attr.height, 65.0f, 1.0f, 1000.f);
     matrix M = getViewMatrix(camX, camY, posX, posY, posZ);
+    (void)P;
+    (void)M;
 
     // Draw Geometry
     glBindFramebuffer(GL_FRAMEBUFFER, gbuffer);

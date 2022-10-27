@@ -8,9 +8,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: sudo mv /Library/Developer/CommandLineTools/SDKs/ /Library/Developer/CommandLineTools/SDKs_old/
+      - run: sudo xcode-select --switch /Applications/Xcode.app/
       - run: make macos
-      - run: make ios-sim
       - run: make ios
+      - run: make ios-sim
       - uses: actions/upload-artifact@v2
         with:
           name: macos
@@ -22,6 +23,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
       - run: make win32
       - uses: actions/upload-artifact@v2
         with:

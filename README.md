@@ -1,7 +1,6 @@
 # Vigier
 
-![CI](https://github.com/shff/ge/workflows/Rust/badge.svg)
-![Crates](https://img.shields.io/crates/v/vigier)
+![CI](https://github.com/shff/ge/workflows/Build/badge.svg)
 
 ## LICENSE
 
